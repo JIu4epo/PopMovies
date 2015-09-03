@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Pop Movies</string>
+    <string name="hello_world">Hello world----</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_detail">DetailActivity</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+
+    <string name="sort_key" translatable="false">sort</string>
+    <string name="sort_label">Sort Method</string>
+    <string name="sort_default">popularity.desc</string>
+    <string name="sort_label_popularity" translatable="false">Most Popular</string>
+    <string name="sort_label_rating" tranclstable="false">Higher Rated</string>
+    <string name="pref_sort_popularity" translatable="false">popularity.desc</string>
+    <string name="pref_sort_rating" tranclstable="false">vote_average.desc</string>
+</resources>
