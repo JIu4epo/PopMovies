@@ -114,8 +114,8 @@ public class MainActivityFragment extends Fragment {
                 final String MOVIEINFO_SORT = "sort_by";
                 final String MOVIEINFO_APIKEY = "api_key";
                 Uri builtUri = Uri.parse(MOVIEINFO_BASE_URL).buildUpon().
-                appendQueryParameter(MOVIEINFO_SORT, params[0]).
-                appendQueryParameter(MOVIEINFO_APIKEY, apiKey).build();
+                    appendQueryParameter(MOVIEINFO_SORT, params[0]).
+                    appendQueryParameter(MOVIEINFO_APIKEY, apiKey).build();
                 URL url = new URL(builtUri.toString());
                 urlCOnnection = (HttpURLConnection) url.openConnection();
                 urlCOnnection.setRequestMethod("GET");
