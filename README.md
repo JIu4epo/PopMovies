@@ -1,7 +1,5 @@
 # PopMovies
 
-# PopMovies
-
 Final project for the "Udacity Developing Android Apps” course
 
 <b>Project Summary</b>  
