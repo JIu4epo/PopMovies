@@ -1,8 +1,6 @@
 package com.mycompany.popmovies;
 
 import android.content.Intent;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -15,23 +13,13 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
 /**
  * A placeholder fragment containing a simple view.
  */
 public class DetailActivityFragment extends Fragment {
     final String LOG_TAG = DetailActivityFragment.class.getSimpleName();
-    private String[] mMovieDetailArray;
+    //private String[] mMovieDetailArray;
+    private Movie mMovie;
     private String[] mVideosResult = {"11","22","33"};
     private VideosAdapter mVideosAdapter;
     TextView textView1;
@@ -48,20 +36,17 @@ public class DetailActivityFragment extends Fragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
 
         Intent intent = getActivity().getIntent();
+        if (intent !=null && intent.hasExtra("movie")) {
 
-
-
-        if (intent !=null && intent.hasExtra("movieDetailsArray")) {
-            mMovieDetailArray = intent.getStringArrayExtra("movieDetailsArray");
-            Log.v(LOG_TAG, "--"+mMovieDetailArray[0]);
+            mMovie =  (Movie)intent.getSerializableExtra("movie");
+            Log.v(LOG_TAG, "--"+mMovie.getTitle());
         }
-        Log.v(LOG_TAG, "Starting Async");
-        FetchMovieVideos movieVideosTask = new FetchMovieVideos();
-        movieVideosTask.execute();
+        //Log.v(LOG_TAG, "Starting Async");
+        /**FetchMovieVideos movieVideosTask = new FetchMovieVideos();
+        movieVideosTask.execute();*/
 
 
     }
@@ -71,62 +56,49 @@ public class DetailActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
         Log.v(LOG_TAG, "Starting oncreateView");
 
-        Intent intent = getActivity().getIntent();
+        /**Intent intent = getActivity().getIntent();*/
 
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
 
         //mVideosAdapter = new VideosAdapter(getActivity());
 
-        mVideosAdapter = new VideosAdapter(getActivity(), R.layout.list_item_trailer, mVideosResult);
+        /**mVideosAdapter = new VideosAdapter(getActivity(), R.layout.list_item_trailer, mVideosResult);*/
 
-        if (intent !=null && intent.hasExtra("movieDetailsArray")){
-
-
+        /**if (intent !=null && intent.hasExtra("movie")){*/
 
 
 
 
-            //mMovieDetailArray = intent.getStringArrayExtra("movieDetailsArray");
 
-            TextView titleTextView = (TextView) rootView.findViewById(R.id.movie_title);
-            titleTextView.setText(mMovieDetailArray[2]);
-            TextView plotTextView = (TextView) rootView.findViewById(R.id.movie_plot);
-            plotTextView.setText(mMovieDetailArray[3]);
-            TextView ratingTextView = (TextView) rootView.findViewById(R.id.movie_rating);
-            ratingTextView.setText(mMovieDetailArray[5]);
-            ImageView posterImageView = (ImageView) rootView.findViewById(R.id.movie_poster);
-            Picasso.with(getActivity()).load(mMovieDetailArray[0]).into(posterImageView);
-            TextView dateTextView = (TextView) rootView.findViewById(R.id.movie_date);
-            dateTextView.setText(mMovieDetailArray[4]);
 
-//
-//            TextView textView1 = (TextView) rootView.findViewById(R.id.movie_trailer);
-//            //textView1.
-//            trailerTextView.setClickable(true);
-//            trailerTextView.setMovementMethod(LinkMovementMethod.getInstance());
+        //mMovieDetailArray = intent.getStringArrayExtra("movieDetailsArray");
 
-            ListView trailersList = (ListView)rootView.findViewById(R.id.listview_trailers);
-            Log.v(LOG_TAG, "Before adapter");
-            trailersList.setAdapter(mVideosAdapter);
+        TextView titleTextView = (TextView) rootView.findViewById(R.id.movie_title);
+        titleTextView.setText(mMovie.getTitle());
+        TextView plotTextView = (TextView) rootView.findViewById(R.id.movie_plot);
+        plotTextView.setText(mMovie.getOverview());
+        TextView ratingTextView = (TextView) rootView.findViewById(R.id.movie_rating);
+        ratingTextView.setText(mMovie.getRating());
+        ImageView posterImageView = (ImageView) rootView.findViewById(R.id.movie_poster);
+        Picasso.with(getActivity()).load(mMovie.getPosterUri()).into(posterImageView);
+        TextView dateTextView = (TextView) rootView.findViewById(R.id.movie_date);
+        dateTextView.setText(mMovie.getDate());
+
+
+        ListView trailersList = (ListView)rootView.findViewById(R.id.listview_trailers);
+        Log.v(LOG_TAG, "Before adapter");
+        trailersList.setAdapter(mVideosAdapter);
 
 
 
-//            if (mVideosResult != null) {
-//                Log.v(LOG_TAG, "Succes!!!!");
-//                //trailerTextView.setText(Html.fromHtml(getActivity().getString(R.string.trailer_link, mMovieDetailArray[1])));
-//                trailerTextView.setText(Html.fromHtml(getActivity().getString(R.string.trailer_link, mVideosResult[0])));
-//            } else {
-//                Toast.makeText(getActivity(),"ss",Toast.LENGTH_LONG).show();
-//            }
 
-
-
-        }
+   /** }*/
         return rootView;
     }
 
 
+/**
     public class FetchMovieVideos extends AsyncTask<Void, Void, String[]> {
         private final String LOG_TAG = FetchMovieVideos.class.getSimpleName();
         @Override
@@ -229,4 +201,5 @@ public class DetailActivityFragment extends Fragment {
             }
         }
     }
+*/
 }

@@ -35,7 +35,7 @@ public class MainActivityFragment extends Fragment {
     private final String LOG_TAG = FetchMovieInfoTask.class.getSimpleName();
 
     GridView gridView;
-    private ImageAdapter mImageAdapter;
+    private GridViewAdapter mGridViewAdapter;
 
     public MainActivityFragment() {
     }
@@ -45,17 +45,18 @@ public class MainActivityFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        mImageAdapter = new ImageAdapter(getActivity());
+        mGridViewAdapter = new GridViewAdapter(getActivity());
 
         gridView = (GridView) rootView.findViewById(R.id.gridview_movie);
-        gridView.setAdapter(mImageAdapter);
+        gridView.setAdapter(mGridViewAdapter);
 
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String[] movieDetails = mImageAdapter.getItem(position);
+                Movie movieDetails = mGridViewAdapter.getItem(position);
 
-                Intent intent = new Intent(getActivity(), DetailActivity.class).putExtra("movieDetailsArray",movieDetails);
+                Intent intent = new Intent(getActivity(), DetailActivity.class).putExtra("movie",movieDetails);
+
                 startActivity(intent);
             }
         });
@@ -93,12 +94,12 @@ public class MainActivityFragment extends Fragment {
         updateImgs();
     }
 
-    public class FetchMovieInfoTask extends AsyncTask<String, Void, String[][]>{
+    public class FetchMovieInfoTask extends AsyncTask<String, Void, Movie[]>{
         private final String LOG_TAG = FetchMovieInfoTask.class.getSimpleName();
 
 
         @Override
-        protected String[][] doInBackground(String... params){
+        protected Movie[] doInBackground(String... params){
             if (params.length == 0){
                 return null;
             }
@@ -106,7 +107,7 @@ public class MainActivityFragment extends Fragment {
             BufferedReader reader = null;
 
             String movieInfoJsonStr = null;
-            Log.v(LOG_TAG, "+++"+params[0]);
+            //Log.v(LOG_TAG, "+++"+params[0]);
             String apiKey = "fa2461a57ac80bd28b2dc05dcb78f1e6"; //delete API key when sharing
 
             try {
@@ -114,8 +115,8 @@ public class MainActivityFragment extends Fragment {
                 final String MOVIEINFO_SORT = "sort_by";
                 final String MOVIEINFO_APIKEY = "api_key";
                 Uri builtUri = Uri.parse(MOVIEINFO_BASE_URL).buildUpon().
-                    appendQueryParameter(MOVIEINFO_SORT, params[0]).
-                    appendQueryParameter(MOVIEINFO_APIKEY, apiKey).build();
+                        appendQueryParameter(MOVIEINFO_SORT, params[0]).
+                        appendQueryParameter(MOVIEINFO_APIKEY, apiKey).build();
                 URL url = new URL(builtUri.toString());
                 urlCOnnection = (HttpURLConnection) url.openConnection();
                 urlCOnnection.setRequestMethod("GET");
@@ -168,7 +169,7 @@ public class MainActivityFragment extends Fragment {
 
         }
 
-        private String[][] getMovieInfoDataFromJason (String movieInfoJsonStr) throws JSONException {
+        private Movie[] getMovieInfoDataFromJason (String movieInfoJsonStr) throws JSONException {
             final String TMDB_RESULTS = "results";
             final String TMDB_IMG_URL = "poster_path"; //maybe need to change to "postar_path"
             final String TMDB_ID = "id";
@@ -182,30 +183,31 @@ public class MainActivityFragment extends Fragment {
             JSONObject movieDataJason = new JSONObject(movieInfoJsonStr);
             JSONArray movieDataArray = movieDataJason.getJSONArray(TMDB_RESULTS);
 
-            String[][] finalArray = new String[movieDataArray.length()][6];
+            Movie[] resultArray = new Movie[movieDataArray.length()];
 
             for (int i =0; i<movieDataArray.length(); i++){
 
                 JSONObject movieInfo = movieDataArray.getJSONObject(i);
+                resultArray[i] = new Movie();
 
-                finalArray[i][0] = imageUrlBase + movieInfo.getString(TMDB_IMG_URL);
-                finalArray[i][1] = movieInfo.getString(TMDB_ID);
-                finalArray[i][2] = movieInfo.getString(TMDB_TITLE);
-                finalArray[i][3] = movieInfo.getString(TMDB_OVERVIEW);
-                finalArray[i][4] = movieInfo.getString(TMDB_RELEASE_DATE);
-                finalArray[i][5] = movieInfo.getString(TMDB_RAITING);
+                resultArray[i].setId(movieInfo.getString(TMDB_ID)); //TODO: change ID to int
+                resultArray[i].setTitle(movieInfo.getString(TMDB_TITLE));
+                resultArray[i].setPosterUri(imageUrlBase + movieInfo.getString(TMDB_IMG_URL));
+                resultArray[i].setOverview(movieInfo.getString(TMDB_OVERVIEW));
+                resultArray[i].setRating(movieInfo.getString(TMDB_RAITING));
+                resultArray[i].setDate(movieInfo.getString(TMDB_RELEASE_DATE));
             }
-            return finalArray;
+            return resultArray;
         }
+
+
+
         @Override
-        protected void onPostExecute(String[][] result){
+        protected void onPostExecute(Movie[] result){
             if (result !=null){
-                mImageAdapter.setResult(result);
+                mGridViewAdapter.setResult(result);
             }
         }
     }
 }
-
-
-
 
