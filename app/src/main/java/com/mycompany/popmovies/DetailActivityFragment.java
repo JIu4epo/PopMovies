@@ -56,6 +56,7 @@ public class DetailActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
         Log.v(LOG_TAG, "Starting oncreateView");
 
+
         /**Intent intent = getActivity().getIntent();*/
 
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
