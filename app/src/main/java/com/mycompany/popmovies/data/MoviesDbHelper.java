@@ -13,7 +13,7 @@ import com.mycompany.popmovies.data.MoviesContract.VideosEntry;
 
 public class MoviesDbHelper extends SQLiteOpenHelper {
 
-    static final String DATABASE_NAME = "movies.db";
+    public static final String DATABASE_NAME = "movies.db";
     private static final int DATABASE_VERSION = 1;
 
 
@@ -34,6 +34,7 @@ public class MoviesDbHelper extends SQLiteOpenHelper {
                 MoviesEntry.COLUMN_OVERVIEW + " TEXT NOT NULL, " +
                 MoviesEntry.COLUMN_MDB_ID + " INTEGER NOT NULL, " +
                 MoviesEntry.COLUMN_VOTE_AVERAGE + " REAL NOT NULL, " +
+                MoviesEntry.COLUMN_POPULARITY + " REAL NOT NULL, " +
                 MoviesEntry.COLUMN_FAV_MOVIE + " BOOLEAN NOT NULL);";
 
         final String SQL_CREATE_VIDEOS_TABLE = "CREATE TABLE " + VideosEntry.TABLE_NAME + " (" +
@@ -49,6 +50,8 @@ public class MoviesDbHelper extends SQLiteOpenHelper {
                 ReviewsEntry.COLUMN_MOVIE_KEY + " INTEGER NOT NULL, " +
                 ReviewsEntry.COLUMN_MDB_ID + " TEXT NOT NULL, " +
                 ReviewsEntry.COLUMN_CONTENT + " TEXT NOT NULL, " +
+                ReviewsEntry.COLUMN_AUTHOR + " TEXT NOT NULL, " +
+                ReviewsEntry.COLUMN_URL + " TEXT NOT NULL, " +
                 " FOREIGN KEY (" + ReviewsEntry.COLUMN_MOVIE_KEY + ") REFERENCES " +
                 MoviesEntry.TABLE_NAME + " (" + MoviesEntry._ID + "));";
 

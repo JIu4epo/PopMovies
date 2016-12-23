@@ -2,18 +2,14 @@
 
 <ImageView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:scaleType="fitCenter"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:scaleType="centerCrop"
     android:adjustViewBounds="true"
-    android:id="@+id/grid_item_movie_imageview">
+
+    android:id="@+id/grid_item_movie_imageview"
+
+    >
+    <!--android:scaleType="fitCenter"-->
 
 </ImageView>
-<!--<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:minHeight="?android:attr/listPreferredItemHeight"
-    android:gravity="center_vertical"
-    android:id="@+id/grid_item_movie_imageview">-
-
-</TextView>-->

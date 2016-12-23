@@ -1,32 +1,318 @@
 package com.mycompany.popmovies;
 
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+import android.support.v7.app.ActionBar;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ImageView;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.mycompany.popmovies.data.MoviesContract;
 import com.squareup.picasso.Picasso;
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class DetailActivityFragment extends Fragment {
+public class DetailActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
     final String LOG_TAG = DetailActivityFragment.class.getSimpleName();
-    //private String[] mMovieDetailArray;
-    private Movie mMovie;
-    private String[] mVideosResult = {"11","22","33"};
-    private VideosAdapter mVideosAdapter;
-    TextView textView1;
+    TextView tvTitle, tvDate, tvPlot, tvRaiting, tvTrailerLink, tvReview;
+    ImageView ivPoster;
+    ListView lvTrailers, lvReviews;
+    String[] items, itemLabel;
+    Cursor reviewsCursor, trailersCursor;
+
+    String dBmovieID;
+    String mDBmovieID;
+
+    ShareActionProvider mShareActionProvider;
+
+    private static final int MOVIE_LOADER = 0;
+    private static final int VIDEO_LOADER = 1;
+    private static final String[] MOVIE_COLUMNS = {
+            MoviesContract.MoviesEntry.TABLE_NAME + "." + MoviesContract.MoviesEntry._ID,
+            MoviesContract.MoviesEntry.COLUMN_NAME,
+            MoviesContract.MoviesEntry.COLUMN_POSTER_PATH,
+            MoviesContract.MoviesEntry.COLUMN_RELEASE_DATE,
+            MoviesContract.MoviesEntry.COLUMN_OVERVIEW,
+            MoviesContract.MoviesEntry.COLUMN_MDB_ID,
+            MoviesContract.MoviesEntry.COLUMN_VOTE_AVERAGE,
+            MoviesContract.MoviesEntry.COLUMN_POPULARITY,
+            MoviesContract.MoviesEntry.COLUMN_FAV_MOVIE
+
+    };
+
+    static final int COL_MOVIE_ID = 0;
+    static final int COL_MOVIE_NAME = 1;
+    static final int COL_MOVIE_POSTER_PATH = 2;
+    static final int COL_MOVIE_RELEASE_DATE = 3;
+    static final int COL_MOVIE_OVERVIEW = 4;
+    static final int COL_MOVIE_MDB_ID = 5;
+    static final int COL_MOVIE_VOTE_AVERAGE = 6;
+    static final int COL_MOVIE_POPULARITY = 7;
+    static final int COL_MOVIE_FAV_MOVIE = 8;
 
     public DetailActivityFragment() {
     }
 
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        Intent intent = getActivity().getIntent();
+        if (intent == null) {
+            return null;
+        }
+        //Log.v(LOG_TAG, String.valueOf(intent.getData()));
+        return new CursorLoader(getActivity(),intent.getData(), MOVIE_COLUMNS, null, null, null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        if (!data.moveToFirst()){
+            return;
+        }
+
+        tvTitle = (TextView) getView().findViewById(R.id.movie_title);
+        tvDate = (TextView) getView().findViewById(R.id.movie_date);
+        tvPlot = (TextView) getView().findViewById(R.id.movie_plot);
+        tvRaiting = (TextView) getView().findViewById(R.id.movie_rating);
+        ivPoster = (ImageView) getView().findViewById(R.id.movie_poster);
+
+        tvTitle.setText(data.getString(COL_MOVIE_NAME));
+        tvRaiting.setText(data.getString(COL_MOVIE_VOTE_AVERAGE));
+        tvPlot.setText(data.getString(COL_MOVIE_OVERVIEW));
+        tvDate.setText(data.getString(COL_MOVIE_RELEASE_DATE));
+        Picasso.with(getActivity()).load(data.getString(COL_MOVIE_POSTER_PATH)).into(ivPoster);
+
+        dBmovieID = data.getString(COL_MOVIE_ID);
+        mDBmovieID = data.getString(COL_MOVIE_MDB_ID);
+        //Log.v(LOG_TAG, "dBmovieID - " + dBmovieID);
+        //Log.v(LOG_TAG, "mDBmovieID - " + mDBmovieID);
+
+        lvTrailers = (ListView) getView().findViewById(R.id.listview_trailers);
+        lvReviews = (ListView) getView().findViewById(R.id.listview_reviews);
+
+        //tvTrailerLink = (TextView) getView().findViewById(R.id.movie_trailer);
+
+//        Cursor cursor = getActivity().getContentResolver().query(MoviesContract.VideosEntry.CONTENT_URI,
+//                new String[]{MoviesContract.VideosEntry.COLUMN_TRAILER_PATH},
+//                MoviesContract.VideosEntry.COLUMN_MOVIE_KEY,
+//                new String[]{dBmovieID},
+//                null);
+        //Log.v("CorrectUri - ", String.valueOf(MoviesContract.VideosEntry.buildVideosUriWithID(Long.parseLong(dBmovieID))));
+
+        trailersCursor = getActivity().getContentResolver().query(
+                MoviesContract.VideosEntry.buildVideosUriWithID(Long.parseLong(dBmovieID)),
+                null,
+                null,
+                null,
+                null);
+
+        reviewsCursor = getActivity().getContentResolver().query(
+                MoviesContract.ReviewsEntry.buildReviewsUriWithID(Long.parseLong(dBmovieID)),
+                null,
+                null,
+                null,
+                null);
+
+        if (!trailersCursor.moveToFirst()){
+            FetchVideosTask fetchVideosTask = new FetchVideosTask(getActivity());
+            fetchVideosTask.execute(mDBmovieID, dBmovieID);
+        }
+
+        if (!reviewsCursor.moveToFirst()){
+            FetchReviewsTask fetchReviewsTask = new FetchReviewsTask(getActivity());
+            fetchReviewsTask.execute(mDBmovieID, dBmovieID);
+        }
+            //thereIsSomethingInTheTable(cursor);
+
+           // Log.v(LOG_TAG, "Videos Table is not empty anymore");
+/**            items = new String[cursor.getCount()];
+            int i = 0;
+            do {
+                Log.v(LOG_TAG, cursor.getString(0) + " - " + cursor.getString(1) + " - " + cursor.getString(2) + " - " + cursor.getString(3));
+                items[i] = cursor.getString(3);
+                i++;
+            } while (cursor.moveToNext());
+            List<String> stringList = new ArrayList<String>(Arrays.asList(items)); //new ArrayList is only needed if you absolutely need an ArrayList
+
+            ArrayAdapter adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_trailer,R.id.textview_trailer_link, stringList);
+            listView.setAdapter(adapter);*/
+
+/**        lvReviews.setOnTouchListener(new ListView.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                int action = event.getAction();
+                switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                        // Disallow ScrollView to intercept touch events.
+                        v.getParent().requestDisallowInterceptTouchEvent(true);
+                        break;
+
+                    case MotionEvent.ACTION_UP:
+                        // Allow ScrollView to intercept touch events.
+                        v.getParent().requestDisallowInterceptTouchEvent(false);
+                        break;
+                }
+
+                // Handle ListView touch events.
+                v.onTouchEvent(event);
+                return true;
+            }
+        });
+
+        lvTrailers.setOnTouchListener(new ListView.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                int action = event.getAction();
+                switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                        // Disallow ScrollView to intercept touch events.
+                        v.getParent().requestDisallowInterceptTouchEvent(true);
+                        break;
+
+                    case MotionEvent.ACTION_UP:
+                        // Allow ScrollView to intercept touch events.
+                        v.getParent().requestDisallowInterceptTouchEvent(false);
+                        break;
+                }
+
+                // Handle ListView touch events.
+                v.onTouchEvent(event);
+                return true;
+            }
+        });*/
+
+
+            VideosAdapter vAdapter = new VideosAdapter(trailersCursor, getActivity(), 0);
+            lvTrailers.setAdapter(vAdapter);
+
+            ReviewsAdapter rAdapter = new ReviewsAdapter(reviewsCursor, getActivity(), 0);
+            lvReviews.setAdapter(rAdapter);
+            //vAdapter.notifyDataSetChanged();
+        setListViewHeightBasedOnChildren(lvReviews);
+        setListViewHeightBasedOnChildren(lvTrailers);
+
+
+        lvTrailers.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                Intent sendIntent = new Intent();
+                sendIntent.setAction(Intent.ACTION_VIEW);
+                sendIntent.setData(Uri.parse(trailersCursor.getString(3)));
+                startActivity(sendIntent);
+            }
+        });
+
+        lvReviews.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                Intent sendIntent = new Intent();
+                sendIntent.setAction(Intent.ACTION_VIEW);
+                sendIntent.setData(Uri.parse(reviewsCursor.getString(5)));
+                startActivity(sendIntent);
+            }
+        });
+        //cursor.close();
+    }
+
+/**    public void thereIsSomethingInTheTable(){
+
+        final Cursor cursor = getActivity().getContentResolver().query(
+                //MoviesContract.VideosEntry.CONTENT_URI,
+                MoviesContract.VideosEntry.buildVideosUriWithID(Long.parseLong(dBmovieID)),
+                null,
+                //new String[]{MoviesContract.VideosEntry.COLUMN_TRAILER_PATH},
+                null,
+                //new String[]{dBmovieID},
+                null,
+                null);
+        //final String[] items;
+
+
+        if (!cursor.moveToFirst()){
+
+            FetchVideosTask fetchVideosTask = new FetchVideosTask(getActivity());
+            fetchVideosTask.execute(mDBmovieID, dBmovieID);
+
+            Log.v(LOG_TAG, "Starting fetchVideos");
+
+            //thereIsSomethingInTheTable(cursor);
+
+        } else {
+            //thereIsSomethingInTheTable(cursor);
+
+            Log.v(LOG_TAG, "Videos Table is not empty anymore");
+            items = new String[cursor.getCount()];
+            itemLabel = new String[cursor.getCount()];
+            int i = 0;
+            do {
+                //Log.v(LOG_TAG, cursor.getString(0) + " - " + cursor.getString(1) + " - " + cursor.getString(2) + " - " + cursor.getString(3));
+                items[i] = cursor.getString(3);
+                itemLabel[i] = "Trailer "+(i+1);
+                i++;
+            } while (cursor.moveToNext());
+            List<String> stringList = new ArrayList<String>(Arrays.asList(itemLabel)); //new ArrayList is only needed if you absolutely need an ArrayList
+            ArrayAdapter adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_trailer,R.id.textview_trailer_link, stringList);
+            //VideosAdapter adapter = new VideosAdapter(getActivity(),R.layout.list_item_trailer,items);
+            listView.setAdapter(adapter);
+
+
+
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                    Intent sendIntent = new Intent();
+                    sendIntent.setAction(Intent.ACTION_VIEW);
+                    sendIntent.setData(Uri.parse(items[position]));
+                    startActivity(sendIntent);
+                }
+            });
+        }
+
+
+
+
+        cursor.close();
+*//**        final String[] items;
+
+        Log.v(LOG_TAG, "Videos Table is not empty anymore");
+        items = new String[cursor.getCount()];
+        int i = 0;
+        do {
+            Log.v(LOG_TAG, cursor.getString(0) + " - " + cursor.getString(1) + " - " + cursor.getString(2) + " - " + cursor.getString(3));
+            items[i] = cursor.getString(3);
+            i++;
+        } while (cursor.moveToNext());
+            List<String> stringList = new ArrayList<String>(Arrays.asList(items)); //new ArrayList is only needed if you absolutely need an ArrayList
+
+            ArrayAdapter adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_trailer,R.id.textview_trailer_link, stringList);
+            listView.setAdapter(adapter);*//*
+    }*/
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        getLoaderManager().initLoader(MOVIE_LOADER, null, this);
+        super.onActivityCreated(savedInstanceState);
+    }
 
     @Override
     public void onStart() {
@@ -37,18 +323,6 @@ public class DetailActivityFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        Intent intent = getActivity().getIntent();
-        if (intent !=null && intent.hasExtra("movie")) {
-
-            mMovie =  (Movie)intent.getSerializableExtra("movie");
-            Log.v(LOG_TAG, "--"+mMovie.getTitle());
-        }
-        //Log.v(LOG_TAG, "Starting Async");
-        /**FetchMovieVideos movieVideosTask = new FetchMovieVideos();
-        movieVideosTask.execute();*/
-
-
     }
 
     @Override
@@ -56,151 +330,44 @@ public class DetailActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
         Log.v(LOG_TAG, "Starting oncreateView");
 
-
-        /**Intent intent = getActivity().getIntent();*/
-
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
-
-
-        //mVideosAdapter = new VideosAdapter(getActivity());
-
-        /**mVideosAdapter = new VideosAdapter(getActivity(), R.layout.list_item_trailer, mVideosResult);*/
-
-        /**if (intent !=null && intent.hasExtra("movie")){*/
-
-
-
-
-
-
-        //mMovieDetailArray = intent.getStringArrayExtra("movieDetailsArray");
-
-        TextView titleTextView = (TextView) rootView.findViewById(R.id.movie_title);
-        titleTextView.setText(mMovie.getTitle());
-        TextView plotTextView = (TextView) rootView.findViewById(R.id.movie_plot);
-        plotTextView.setText(mMovie.getOverview());
-        TextView ratingTextView = (TextView) rootView.findViewById(R.id.movie_rating);
-        ratingTextView.setText(mMovie.getRating());
-        ImageView posterImageView = (ImageView) rootView.findViewById(R.id.movie_poster);
-        Picasso.with(getActivity()).load(mMovie.getPosterUri()).into(posterImageView);
-        TextView dateTextView = (TextView) rootView.findViewById(R.id.movie_date);
-        dateTextView.setText(mMovie.getDate());
-
-
-        ListView trailersList = (ListView)rootView.findViewById(R.id.listview_trailers);
-        Log.v(LOG_TAG, "Before adapter");
-        trailersList.setAdapter(mVideosAdapter);
-
-
-
-
-   /** }*/
         return rootView;
     }
 
+    private Intent createShareForecastIntent (String uri){
+        Intent intent = new Intent(Intent.ACTION_VIEW);
 
-/**
-    public class FetchMovieVideos extends AsyncTask<Void, Void, String[]> {
-        private final String LOG_TAG = FetchMovieVideos.class.getSimpleName();
-        @Override
-        protected String[] doInBackground(Void... params){
-            Log.v(LOG_TAG, "Start");
-//            if (params.length == 0){
-//                return null;
-//            }
-            HttpURLConnection urlCOnnection = null;
-            BufferedReader reader = null;
-
-            String movieInfoJsonStr = null;
-
-            String apiKey = "fa2461a57ac80bd28b2dc05dcb78f1e6";
-
-
-            Intent intent = getActivity().getIntent();
-            mMovieDetailArray = intent.getStringArrayExtra("movieDetailsArray");
-            try {
-
-                final String MOVIEINFO_BASE_URL= "http://api.themoviedb.org/3/movie/"+mMovieDetailArray[1]+"/videos";
-
-                final String MOVIEINFO_APIKEY = "api_key";
-                Uri builtUri = Uri.parse(MOVIEINFO_BASE_URL).buildUpon().
-                        appendQueryParameter(MOVIEINFO_APIKEY, apiKey).build();
-                Log.v(LOG_TAG, "+++"+builtUri);
-                URL url = new URL(builtUri.toString());
-                urlCOnnection = (HttpURLConnection) url.openConnection();
-                urlCOnnection.setRequestMethod("GET");
-                urlCOnnection.connect();
-
-
-
-                InputStream inputStream = urlCOnnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null){
-                    return null;
-                }
-
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-
-                while ((line = reader.readLine()) != null) {
-                    buffer.append(line + "\n");
-                }
-
-                if (buffer.length() == 0){
-                    return null;
-                }
-
-                movieInfoJsonStr = buffer.toString();
-
-            } catch (IOException e){
-                return null;
-            } finally {
-                if (urlCOnnection !=null){
-                    urlCOnnection.disconnect();
-                }
-                if (reader !=null){
-                    try {
-                        reader.close();
-                    } catch (final IOException e){
-                    }
-                }
-            }
-
-            try {
-                Log.v(LOG_TAG, "Getting json");
-                return getMovieVideosFromJason(movieInfoJsonStr);
-            } catch (JSONException e){
-                e.printStackTrace();
-            }
-            return null;
-
-
-        }
-
-        private String[] getMovieVideosFromJason (String movieVideosJsonStr) throws JSONException {
-            final String TMDB_RESULTS = "results";
-            final String TMDB_KEY = "key";
-            JSONObject movieVideosJason = new JSONObject(movieVideosJsonStr);
-            JSONArray movieVideosArray = movieVideosJason.getJSONArray(TMDB_RESULTS);
-            String[] finalArray = new String[movieVideosArray.length()];
-            for (int i =0; i<movieVideosArray.length(); i++){
-                JSONObject movieVideos = movieVideosArray.getJSONObject(i);
-                finalArray[i] = movieVideos.getString(TMDB_KEY);
-                Log.v(LOG_TAG, "+++" + finalArray[i]);
-            }
-            return finalArray;
-        }
-
-        @Override
-        protected void onPostExecute(String[] result){
-            if (result !=null){
-                //mVideosResult = result;
-                mVideosAdapter.setResult(result);
-//                Log.v(LOG_TAG, "Setting results");
-//                Log.v(LOG_TAG, "One string "+mVideosResult[0]);
-            }
-        }
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        //intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+        intent.setType("text/html");
+        intent.setData(Uri.parse(uri));
+        return intent;
     }
-*/
+
+    /**** Method for Setting the Height of the ListView dynamically.
+     **** Hack to fix the issue of not showing all the items of the ListView
+     **** when placed inside a ScrollView  ****/
+    public static void setListViewHeightBasedOnChildren(ListView listView) {
+        ListAdapter listAdapter = listView.getAdapter();
+        if (listAdapter == null)
+            return;
+
+        int desiredWidth = View.MeasureSpec.makeMeasureSpec(listView.getWidth(), View.MeasureSpec.UNSPECIFIED);
+        int totalHeight = 0;
+        View view = null;
+        for (int i = 0; i < listAdapter.getCount(); i++) {
+            view = listAdapter.getView(i, view, listView);
+            if (i == 0)
+                view.setLayoutParams(new ViewGroup.LayoutParams(desiredWidth, ActionBar.LayoutParams.WRAP_CONTENT));
+
+            view.measure(desiredWidth, View.MeasureSpec.UNSPECIFIED);
+            totalHeight += view.getMeasuredHeight();
+        }
+        ViewGroup.LayoutParams params = listView.getLayoutParams();
+        params.height = totalHeight + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
+        listView.setLayoutParams(params);
+    }
+
+
+
 }

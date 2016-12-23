@@ -2,6 +2,8 @@ package com.mycompany.popmovies;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -21,23 +23,20 @@ import java.net.URL;
 import java.util.Vector;
 
 /**
- * Created by Borys on 2016-11-19.
+ *  Class for connecting to TMDB API, fetching JSON string, writing information into DB
  */
 
-public class FetchMovieInfoTask extends AsyncTask<String, Void, Movie[]> {
+public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
+
     private final String LOG_TAG = FetchMovieInfoTask.class.getSimpleName();
-
-
-    private GridViewAdapter mGridViewAdapter;
     private final Context mContext;
 
-    FetchMovieInfoTask(Context context, GridViewAdapter gridViewAdapter){
+    FetchMovieInfoTask(Context context){
         mContext = context;
-        mGridViewAdapter = gridViewAdapter;
     }
 
     @Override
-    protected Movie[] doInBackground(String... params){
+    protected Void doInBackground(String... params){
         if (params.length == 0){
             return null;
         }
@@ -45,7 +44,6 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Movie[]> {
         BufferedReader reader = null;
 
         String movieInfoJsonStr = null;
-        //Log.v(LOG_TAG, "+++"+params[0]);
         String apiKey = "fa2461a57ac80bd28b2dc05dcb78f1e6"; //delete API key when sharing
 
         try {
@@ -79,10 +77,13 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Movie[]> {
             }
 
             movieInfoJsonStr = buffer.toString();
+            getMovieInfoDataFromJason(movieInfoJsonStr);
 
-        } catch (IOException e){
+        } catch (IOException e) {
             Log.e(LOG_TAG, "Error ", e);
-            return null;
+        } catch (JSONException e){
+            Log.e(LOG_TAG, e.getMessage(), e);
+            e.printStackTrace();
         } finally {
             if (urlCOnnection !=null){
                 urlCOnnection.disconnect();
@@ -95,31 +96,12 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Movie[]> {
                 }
             }
         }
-
-        try {
-            return getMovieInfoDataFromJason(movieInfoJsonStr);
-        } catch (JSONException e){
-            Log.e(LOG_TAG, e.getMessage(),e);
-            e.printStackTrace();
-        }
         return null;
-
-
     }
 
-    String[] convertContentValuesToUXFormat(Vector<ContentValues> cvv) {
-        // return strings to keep UI functional for now
-        String[] resultStrs = new String[cvv.size()];
-        for ( int i = 0; i < cvv.size(); i++ ) {
-            ContentValues weatherValues = cvv.elementAt(i);
 
-            resultStrs[i] = weatherValues.getAsString(MoviesContract.MoviesEntry.COLUMN_NAME) +
-                    " - " + weatherValues.getAsString(MoviesContract.MoviesEntry.COLUMN_RELEASE_DATE);
-        }
-        return resultStrs;
-    }
 
-    private Movie[] getMovieInfoDataFromJason (String movieInfoJsonStr) throws JSONException {
+    private void getMovieInfoDataFromJason (String movieInfoJsonStr) throws JSONException {
         final String TMDB_RESULTS = "results";
         final String TMDB_IMG_URL = "poster_path"; //maybe need to change to "postar_path"
         final String TMDB_ID = "id";
@@ -127,37 +109,28 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Movie[]> {
         final String TMDB_OVERVIEW = "overview";
         final String TMDB_RELEASE_DATE = "release_date";
         final String TMDB_RAITING = "vote_average";
-        final String imageUrlBase = "http://image.tmdb.org/t/p/w185";
+        final String TMDB_POPULARITY = "popularity";
+        final String imageUrlBase = "http://image.tmdb.org/t/p/w342";
 
     try {
         JSONObject movieDataJason = new JSONObject(movieInfoJsonStr);
         JSONArray movieDataArray = movieDataJason.getJSONArray(TMDB_RESULTS);
 
-        Vector<ContentValues> cVVector = new Vector<ContentValues>(movieDataArray.length());
-
-
-        Movie[] resultArray = new Movie[movieDataArray.length()];
+        Vector<ContentValues> cVVector = new Vector<>(movieDataArray.length());
 
         for (int i =0; i<movieDataArray.length(); i++){
 
             JSONObject movieInfo = movieDataArray.getJSONObject(i);
-            resultArray[i] = new Movie();
-
-            resultArray[i].setId(movieInfo.getString(TMDB_ID)); //TODO: change ID to int
-            resultArray[i].setTitle(movieInfo.getString(TMDB_TITLE));
-            resultArray[i].setPosterUri(imageUrlBase + movieInfo.getString(TMDB_IMG_URL));
-            resultArray[i].setOverview(movieInfo.getString(TMDB_OVERVIEW));
-            resultArray[i].setRating(movieInfo.getString(TMDB_RAITING));
-            resultArray[i].setDate(movieInfo.getString(TMDB_RELEASE_DATE));
 
             ContentValues moviesValues = new ContentValues();
 
-            moviesValues.put(MoviesContract.MoviesEntry.COLUMN_NAME, resultArray[i].getTitle());
-            moviesValues.put(MoviesContract.MoviesEntry.COLUMN_POSTER_PATH, resultArray[i].getPosterUri());
-            moviesValues.put(MoviesContract.MoviesEntry.COLUMN_RELEASE_DATE, resultArray[i].getDate());
-            moviesValues.put(MoviesContract.MoviesEntry.COLUMN_OVERVIEW, resultArray[i].getOverview());
-            moviesValues.put(MoviesContract.MoviesEntry.COLUMN_MDB_ID, resultArray[i].getId());
-            moviesValues.put(MoviesContract.MoviesEntry.COLUMN_VOTE_AVERAGE, resultArray[i].getRating());
+            moviesValues.put(MoviesContract.MoviesEntry.COLUMN_NAME, movieInfo.getString(TMDB_TITLE));
+            moviesValues.put(MoviesContract.MoviesEntry.COLUMN_POSTER_PATH, imageUrlBase + movieInfo.getString(TMDB_IMG_URL));
+            moviesValues.put(MoviesContract.MoviesEntry.COLUMN_RELEASE_DATE, movieInfo.getString(TMDB_RELEASE_DATE));
+            moviesValues.put(MoviesContract.MoviesEntry.COLUMN_OVERVIEW, movieInfo.getString(TMDB_OVERVIEW));
+            moviesValues.put(MoviesContract.MoviesEntry.COLUMN_MDB_ID, movieInfo.getString(TMDB_ID));
+            moviesValues.put(MoviesContract.MoviesEntry.COLUMN_VOTE_AVERAGE, movieInfo.getString(TMDB_RAITING));
+            moviesValues.put(MoviesContract.MoviesEntry.COLUMN_POPULARITY, movieInfo.getString(TMDB_POPULARITY));
             moviesValues.put(MoviesContract.MoviesEntry.COLUMN_FAV_MOVIE, "false");
 
             cVVector.add(moviesValues);
@@ -172,10 +145,12 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Movie[]> {
         }
 
 /**
- *   Uncomment to check if insert is successful
+ *   TODO: Uncomment to check if insert is successful
  *
  *
- * Cursor cur = mContext.getContentResolver().query(MoviesContract.MoviesEntry.CONTENT_URI,
+ */
+    /***********************************/
+        Cursor cur = mContext.getContentResolver().query(MoviesContract.MoviesEntry.CONTENT_URI,
                 null, null, null, null);
 
         cVVector = new Vector<ContentValues>(cur.getCount());
@@ -190,27 +165,110 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Movie[]> {
         Log.v(LOG_TAG, "FetchWeatherTask Complete. " + cVVector.size() + " Inserted");
 
         String[] resultStrs = convertContentValuesToUXFormat(cVVector);
-        Log.v("Result", resultStrs[0] +" :: "+resultStrs[1]);*/
+        Log.v("Result", resultStrs[0] +" :: "+resultStrs[1]);
+        //cur.close();
+    /***********************************/
 
+        } catch (JSONException e) {
+            Log.e(LOG_TAG, e.getMessage(), e);
+            e.printStackTrace();
+        }
 
-
-        return resultArray;
-
-    } catch (JSONException e) {
-        Log.e(LOG_TAG, e.getMessage(), e);
-        e.printStackTrace();
-    }
-        //return resultArray;
-        return null;
     }
 
+/**    *//** TODO: Implement addVideos and addReviews same way as addLocation below
+     * Helper method to handle insertion of a new location in the weather database.
+     *
+     * @param locationSetting The location string used to request updates from the server.
+     * @param cityName A human-readable city name, e.g "Mountain View"
+     * @param lat the latitude of the city
+     * @param lon the longitude of the city
+     * @return the row ID of the added location.
+     *//**
+    long addLocation(String locationSetting, String cityName, double lat, double lon) {
 
+        long locationId;
 
-    @Override
+        ContentResolver resolver = mContext.getContentResolver();
+        Cursor cursor = resolver.query(
+                WeatherContract.LocationEntry.CONTENT_URI,
+                new String[]{WeatherContract.LocationEntry._ID},
+                WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ?",
+                new String[]{locationSetting},
+                null
+        );
+
+        if (cursor.moveToFirst()){
+            int locationIndex = cursor.getColumnIndex(WeatherContract.LocationEntry._ID);
+            locationId = cursor.getLong(locationIndex);
+        } else {
+            ContentValues locationValues = new ContentValues();
+
+            locationValues.put(WeatherContract.LocationEntry.COLUMN_CITY_NAME, cityName);
+            locationValues.put(WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING, locationSetting);
+            locationValues.put(WeatherContract.LocationEntry.COLUMN_COORD_LAT, lat);
+            locationValues.put(WeatherContract.LocationEntry.COLUMN_COORD_LONG, lon);
+
+            Uri insertUri = mContext.getContentResolver().insert(
+                    WeatherContract.LocationEntry.CONTENT_URI,
+                    locationValues
+            );
+            locationId = ContentUris.parseId(insertUri);
+        }
+        cursor.close();
+        // Students: First, check if the location with this city name exists in the db
+        // If it exists, return the current ID
+        // Otherwise, insert it using the content resolver and the base URI
+        return locationId;
+    }*/
+
+/**    @Override
     protected void onPostExecute(Movie[] result){
         if (result !=null){
             mGridViewAdapter.setResult(result);
         }
+    }*/
+
+    /** TODO: Uncoment if need to check insertion into DB  */
+    /**************************/
+     String[] convertContentValuesToUXFormat(Vector<ContentValues> cvv) {
+     // return strings to keep UI functional for now
+     String[] resultStrs = new String[cvv.size()];
+     for ( int i = 0; i < cvv.size(); i++ ) {
+     ContentValues weatherValues = cvv.elementAt(i);
+
+     resultStrs[i] = weatherValues.getAsString(MoviesContract.MoviesEntry.COLUMN_NAME) +
+     " - " + weatherValues.getAsString(MoviesContract.MoviesEntry.COLUMN_POSTER_PATH);
+     }
+     return resultStrs;
+     }
+    /**************************/
+
+    @Override
+    protected void onPostExecute(Void aVoid) {
+        Cursor cur = mContext.getContentResolver().query(MoviesContract.MoviesEntry.CONTENT_URI,
+                new String[]{MoviesContract.MoviesEntry._ID, MoviesContract.MoviesEntry.COLUMN_MDB_ID},
+                null,
+                null,
+                null);
+//        if (cur.moveToFirst()){
+//            Log.v(LOG_TAG, "Some umber,  probably 20" + String.valueOf(cur.getCount()));
+//        }
+        cur.moveToFirst();
+        do {
+            FetchVideosTask fetchVideosTask = new FetchVideosTask(mContext);
+            fetchVideosTask.execute(cur.getString(1), cur.getString(0));
+
+            FetchReviewsTask fetchReviewsTask = new FetchReviewsTask(mContext);
+            fetchReviewsTask.execute(cur.getString(1), cur.getString(0));
+            //Log.v(LOG_TAG, "--"+cur.getString(0));
+        } while (cur.moveToNext());
+
+
+
+
+        super.onPostExecute(aVoid);
+        cur.close();
     }
 }
 

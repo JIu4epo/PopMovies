@@ -39,9 +39,21 @@ public class MoviesContract {
         public static final String COLUMN_MDB_ID = "mdb_video_id";
         public static final String COLUMN_TRAILER_PATH = "path";
 
-        public static Uri buildVideosUri(long id){
+        public static Uri buildVideosUriWithID(long id){
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
+
+        public static long getIDFromURI(Uri uri){
+            return Long.parseLong(uri.getPathSegments().get(1));
+         }
+
+        public static Uri buildVideosUri(){
+            /**
+             * content://com.mycompany.popmovies/videos
+             * */
+            return CONTENT_URI;
+        }
+
     }
 
     public static final class ReviewsEntry implements BaseColumns {
@@ -54,9 +66,25 @@ public class MoviesContract {
         public static final String COLUMN_MOVIE_KEY = "movie_id";
         public static final String COLUMN_MDB_ID = "mdb_review_id";
         public static final String COLUMN_CONTENT = "content";
+        public static final String COLUMN_AUTHOR = "author";
+        public static final String COLUMN_URL = "url";
 
-        public static Uri buildReviewsUri(long id){
+
+
+        public static Uri buildReviewsUriWithID(long id){
             return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+
+        public static long getIDFromURI(Uri uri){
+            return Long.parseLong(uri.getPathSegments().get(1));
+        }
+
+        public static Uri buildReviewsUri(){
+            /**
+             * content://com.mycompany.popmovies/reviews
+             * */
+            return CONTENT_URI;
         }
     }
 
@@ -74,49 +102,29 @@ public class MoviesContract {
         public static final String COLUMN_OVERVIEW = "overview";
         public static final String COLUMN_MDB_ID = "mdb_movie_id";
         public static final String COLUMN_VOTE_AVERAGE = "vote_average";
+        public static final String COLUMN_POPULARITY = "popularity";
         public static final String COLUMN_FAV_MOVIE = "fav_movie";
 
-        public static Uri buildMoviesUri(long id){
+        public static Uri buildMoviesUriWithID(long id){
             /**
-             * content://com.mycompany.popmovies/movies
+             * content://com.mycompany.popmovies/movies/id
              * */
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
-        public static Uri buildMoviesVideos(String videos){
+        public static Uri buildMoviesUri(){
             /**
-             * content://com.mycompany.popmovies/movies/videos
+             * content://com.mycompany.popmovies/movies
              * */
-            //Log.v("test Uri", String.valueOf(CONTENT_URI.buildUpon().appendPath(locationSetting).build()));
-            return CONTENT_URI.buildUpon().appendPath(videos).build();
+            return CONTENT_URI;
         }
 
-        public static Uri buildMoviesReviews(String reviews){
-            /**
-             * content://com.mycompany.popmovies/movies/reviews
-             * */
-            return CONTENT_URI.buildUpon().appendPath(reviews).build();
+        public static String getIDFromURI(Uri uri){
+            return String.valueOf(uri.getPathSegments().get(1));
         }
 
 
 
-
-//        public static String getLocationSettingFromUri(Uri uri){
-//            return uri.getPathSegments().get(1);
-//        }
-//
-//        public static long getDateFromUri(Uri uri){
-//            return Long.parseLong(uri.getPathSegments().get(2));
-//        }
-//
-//        public static long getStartDateFromUri(Uri uri){
-//            String dateString = uri.getQueryParameter(COLUMN_DATE);
-//            if (null != dateString && dateString.length() > 0){
-//                return Long.parseLong(dateString);
-//            } else {
-//                return 0;
-//            }
-//        }
 
 
     }

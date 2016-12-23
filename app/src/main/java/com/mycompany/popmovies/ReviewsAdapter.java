@@ -9,27 +9,24 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 /**
- * Created by JIu4epo on 2015-09-23.
+ * Created by Borys on 2016-12-22.
  */
 
-public class VideosAdapter extends CursorAdapter {
+public class ReviewsAdapter extends CursorAdapter {
 
-    public VideosAdapter(Cursor cursor, Context context, int flags){
+    public ReviewsAdapter(Cursor cursor, Context context, int flags){
         super(context, cursor, flags);
     }
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup viewGroup) {
-        View view = LayoutInflater.from(context).inflate(R.layout.list_item_trailer, viewGroup, false);
+        View view = LayoutInflater.from(context).inflate(R.layout.list_item_review, viewGroup, false);
         return view;
     }
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         TextView tv = (TextView) view;
-        //tv.setText(cursor.getString(3));
-        //Log.d("VideosAdapter", "Running");
-        tv.setText("Trailer "+ cursor.getPosition());
+        tv.setText("Review "+cursor.getPosition());
     }
 }
-

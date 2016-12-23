@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.mycompany.popmovies.data.MoviesContract;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -28,6 +30,11 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             return true;
+        }
+        else if (id == R.id.clear_table) {
+            Utility.clearTable(this, MoviesContract.MoviesEntry.buildMoviesUri());
+        } else if (id == R.id.drop_db){
+            Utility.dropDB(this);
         }
         return super.onOptionsItemSelected(item);
     }

@@ -5,5 +5,10 @@
         android:title="@string/action_settings"
         android:orderInCategory="100"
         app:showAsAction="never" />
+    <item android:id="@+id/clear_table"
+        android:title="Clear Table"
+        />
+    <item android:id="@+id/drop_db"
+        android:title="Drop DB"/>
 
 </menu>
