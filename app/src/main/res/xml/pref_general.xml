@@ -8,4 +8,10 @@
         android:entryValues="@array/pref_sort_values"
         android:defaultValue="@string/sort_default"
         />
+    <CheckBoxPreference
+        android:title="@string/fav_title"
+        android:summary="Show only movies market as Favourite"
+        android:key="@string/fav_key"
+        android:defaultValue="false"
+        />
 </PreferenceScreen>

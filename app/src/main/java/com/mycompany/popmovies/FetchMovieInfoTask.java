@@ -126,6 +126,13 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
 
             moviesValues.put(MoviesContract.MoviesEntry.COLUMN_NAME, movieInfo.getString(TMDB_TITLE));
             moviesValues.put(MoviesContract.MoviesEntry.COLUMN_POSTER_PATH, imageUrlBase + movieInfo.getString(TMDB_IMG_URL));
+
+/**            String urlFrom = imageUrlBase + movieInfo.getString(TMDB_IMG_URL);
+            Log.v(LOG_TAG, urlFrom);
+
+            Utility.imageDownload(mContext, urlFrom, movieInfo.getString(TMDB_IMG_URL));*/
+
+
             moviesValues.put(MoviesContract.MoviesEntry.COLUMN_RELEASE_DATE, movieInfo.getString(TMDB_RELEASE_DATE));
             moviesValues.put(MoviesContract.MoviesEntry.COLUMN_OVERVIEW, movieInfo.getString(TMDB_OVERVIEW));
             moviesValues.put(MoviesContract.MoviesEntry.COLUMN_MDB_ID, movieInfo.getString(TMDB_ID));
@@ -270,5 +277,10 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
         super.onPostExecute(aVoid);
         cur.close();
     }
+
+
+
+
+
 }
 

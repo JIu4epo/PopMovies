@@ -1,5 +1,6 @@
 package com.mycompany.popmovies;
 
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -16,6 +17,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -23,6 +25,8 @@ import android.widget.TextView;
 
 import com.mycompany.popmovies.data.MoviesContract;
 import com.squareup.picasso.Picasso;
+
+import java.io.File;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -34,8 +38,9 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     ListView lvTrailers, lvReviews;
     String[] items, itemLabel;
     Cursor reviewsCursor, trailersCursor;
+    ImageButton ibFav;
 
-    String dBmovieID;
+    String dBmovieID, fav;
     String mDBmovieID;
 
     ShareActionProvider mShareActionProvider;
@@ -80,7 +85,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     }
 
     @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+    public void onLoadFinished(Loader<Cursor> loader, final Cursor data) {
         if (!data.moveToFirst()){
             return;
         }
@@ -90,29 +95,84 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         tvPlot = (TextView) getView().findViewById(R.id.movie_plot);
         tvRaiting = (TextView) getView().findViewById(R.id.movie_rating);
         ivPoster = (ImageView) getView().findViewById(R.id.movie_poster);
+        ibFav = (ImageButton) getView().findViewById(R.id.fav_button);
+
+
+
+
 
         tvTitle.setText(data.getString(COL_MOVIE_NAME));
         tvRaiting.setText(data.getString(COL_MOVIE_VOTE_AVERAGE));
         tvPlot.setText(data.getString(COL_MOVIE_OVERVIEW));
         tvDate.setText(data.getString(COL_MOVIE_RELEASE_DATE));
-        Picasso.with(getActivity()).load(data.getString(COL_MOVIE_POSTER_PATH)).into(ivPoster);
+        //Picasso.with(getActivity()).load(data.getString(COL_MOVIE_POSTER_PATH)).into(ivPoster);
+
+
+/*       File img2 = new File(getActivity().getFilesDir() + "/debug.png");
+
+        if (img2.exists()){
+            img2.delete();
+        }*/
+
+        /* Downloading image to internalStorage. Using cache while image is downloading */
+        String imageBaseUrl = "http://image.tmdb.org/t/p/w342/";
+        String imageName = data.getString(COL_MOVIE_POSTER_PATH).replace(imageBaseUrl, "");
+        String imageUrl = data.getString(COL_MOVIE_POSTER_PATH);
+
+        File img = new File(getActivity().getFilesDir() + "/" +imageName);
+
+//        Log.v(LOG_TAG, "img - "+img);
+//        Log.v(LOG_TAG, "imgUrl - "+imageUrl);
+//        Log.v(LOG_TAG, "imgName - "+imageName);
+
+        if (!img.exists()){
+            Log.v(LOG_TAG, "Doesn't Exist");
+
+            Utility.imageDownload(getActivity(), imageUrl , imageName);
+            Picasso.with(getActivity()).load(data.getString(COL_MOVIE_POSTER_PATH)).into(ivPoster);
+        } else {
+            Log.v(LOG_TAG, "Exist");
+            Picasso.with(getActivity()).load(img).into(ivPoster);
+        }
+        /*  */
 
         dBmovieID = data.getString(COL_MOVIE_ID);
         mDBmovieID = data.getString(COL_MOVIE_MDB_ID);
+        fav = data.getString(COL_MOVIE_FAV_MOVIE);
+        //Log.v("DetailFrag", "---" + fav);
         //Log.v(LOG_TAG, "dBmovieID - " + dBmovieID);
         //Log.v(LOG_TAG, "mDBmovieID - " + mDBmovieID);
+
+
+        ibFav.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (fav.equals("false")){
+                    Log.v("onClick"," It's true");
+                    fav = "true";
+                } else {
+                    Log.v("onClick"," It's false");
+                    fav = "false";
+                }
+
+                final ContentValues moviesValues = new ContentValues();
+                moviesValues.put(MoviesContract.MoviesEntry.COLUMN_FAV_MOVIE, fav);
+
+                int rowsUpdated = getActivity().getContentResolver().update(
+                        MoviesContract.MoviesEntry.buildMoviesUriWithID(Long.parseLong(dBmovieID)),
+                        moviesValues,
+                        null,
+                        null
+                );
+            }
+        });
+
+
 
         lvTrailers = (ListView) getView().findViewById(R.id.listview_trailers);
         lvReviews = (ListView) getView().findViewById(R.id.listview_reviews);
 
-        //tvTrailerLink = (TextView) getView().findViewById(R.id.movie_trailer);
 
-//        Cursor cursor = getActivity().getContentResolver().query(MoviesContract.VideosEntry.CONTENT_URI,
-//                new String[]{MoviesContract.VideosEntry.COLUMN_TRAILER_PATH},
-//                MoviesContract.VideosEntry.COLUMN_MOVIE_KEY,
-//                new String[]{dBmovieID},
-//                null);
-        //Log.v("CorrectUri - ", String.valueOf(MoviesContract.VideosEntry.buildVideosUriWithID(Long.parseLong(dBmovieID))));
 
         trailersCursor = getActivity().getContentResolver().query(
                 MoviesContract.VideosEntry.buildVideosUriWithID(Long.parseLong(dBmovieID)),
@@ -137,72 +197,12 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
             FetchReviewsTask fetchReviewsTask = new FetchReviewsTask(getActivity());
             fetchReviewsTask.execute(mDBmovieID, dBmovieID);
         }
-            //thereIsSomethingInTheTable(cursor);
-
-           // Log.v(LOG_TAG, "Videos Table is not empty anymore");
-/**            items = new String[cursor.getCount()];
-            int i = 0;
-            do {
-                Log.v(LOG_TAG, cursor.getString(0) + " - " + cursor.getString(1) + " - " + cursor.getString(2) + " - " + cursor.getString(3));
-                items[i] = cursor.getString(3);
-                i++;
-            } while (cursor.moveToNext());
-            List<String> stringList = new ArrayList<String>(Arrays.asList(items)); //new ArrayList is only needed if you absolutely need an ArrayList
-
-            ArrayAdapter adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_trailer,R.id.textview_trailer_link, stringList);
-            listView.setAdapter(adapter);*/
-
-/**        lvReviews.setOnTouchListener(new ListView.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                int action = event.getAction();
-                switch (action) {
-                    case MotionEvent.ACTION_DOWN:
-                        // Disallow ScrollView to intercept touch events.
-                        v.getParent().requestDisallowInterceptTouchEvent(true);
-                        break;
-
-                    case MotionEvent.ACTION_UP:
-                        // Allow ScrollView to intercept touch events.
-                        v.getParent().requestDisallowInterceptTouchEvent(false);
-                        break;
-                }
-
-                // Handle ListView touch events.
-                v.onTouchEvent(event);
-                return true;
-            }
-        });
-
-        lvTrailers.setOnTouchListener(new ListView.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                int action = event.getAction();
-                switch (action) {
-                    case MotionEvent.ACTION_DOWN:
-                        // Disallow ScrollView to intercept touch events.
-                        v.getParent().requestDisallowInterceptTouchEvent(true);
-                        break;
-
-                    case MotionEvent.ACTION_UP:
-                        // Allow ScrollView to intercept touch events.
-                        v.getParent().requestDisallowInterceptTouchEvent(false);
-                        break;
-                }
-
-                // Handle ListView touch events.
-                v.onTouchEvent(event);
-                return true;
-            }
-        });*/
-
 
             VideosAdapter vAdapter = new VideosAdapter(trailersCursor, getActivity(), 0);
             lvTrailers.setAdapter(vAdapter);
 
             ReviewsAdapter rAdapter = new ReviewsAdapter(reviewsCursor, getActivity(), 0);
             lvReviews.setAdapter(rAdapter);
-            //vAdapter.notifyDataSetChanged();
         setListViewHeightBasedOnChildren(lvReviews);
         setListViewHeightBasedOnChildren(lvTrailers);
 
@@ -229,79 +229,6 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         //cursor.close();
     }
 
-/**    public void thereIsSomethingInTheTable(){
-
-        final Cursor cursor = getActivity().getContentResolver().query(
-                //MoviesContract.VideosEntry.CONTENT_URI,
-                MoviesContract.VideosEntry.buildVideosUriWithID(Long.parseLong(dBmovieID)),
-                null,
-                //new String[]{MoviesContract.VideosEntry.COLUMN_TRAILER_PATH},
-                null,
-                //new String[]{dBmovieID},
-                null,
-                null);
-        //final String[] items;
-
-
-        if (!cursor.moveToFirst()){
-
-            FetchVideosTask fetchVideosTask = new FetchVideosTask(getActivity());
-            fetchVideosTask.execute(mDBmovieID, dBmovieID);
-
-            Log.v(LOG_TAG, "Starting fetchVideos");
-
-            //thereIsSomethingInTheTable(cursor);
-
-        } else {
-            //thereIsSomethingInTheTable(cursor);
-
-            Log.v(LOG_TAG, "Videos Table is not empty anymore");
-            items = new String[cursor.getCount()];
-            itemLabel = new String[cursor.getCount()];
-            int i = 0;
-            do {
-                //Log.v(LOG_TAG, cursor.getString(0) + " - " + cursor.getString(1) + " - " + cursor.getString(2) + " - " + cursor.getString(3));
-                items[i] = cursor.getString(3);
-                itemLabel[i] = "Trailer "+(i+1);
-                i++;
-            } while (cursor.moveToNext());
-            List<String> stringList = new ArrayList<String>(Arrays.asList(itemLabel)); //new ArrayList is only needed if you absolutely need an ArrayList
-            ArrayAdapter adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_trailer,R.id.textview_trailer_link, stringList);
-            //VideosAdapter adapter = new VideosAdapter(getActivity(),R.layout.list_item_trailer,items);
-            listView.setAdapter(adapter);
-
-
-
-            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                    Intent sendIntent = new Intent();
-                    sendIntent.setAction(Intent.ACTION_VIEW);
-                    sendIntent.setData(Uri.parse(items[position]));
-                    startActivity(sendIntent);
-                }
-            });
-        }
-
-
-
-
-        cursor.close();
-*//**        final String[] items;
-
-        Log.v(LOG_TAG, "Videos Table is not empty anymore");
-        items = new String[cursor.getCount()];
-        int i = 0;
-        do {
-            Log.v(LOG_TAG, cursor.getString(0) + " - " + cursor.getString(1) + " - " + cursor.getString(2) + " - " + cursor.getString(3));
-            items[i] = cursor.getString(3);
-            i++;
-        } while (cursor.moveToNext());
-            List<String> stringList = new ArrayList<String>(Arrays.asList(items)); //new ArrayList is only needed if you absolutely need an ArrayList
-
-            ArrayAdapter adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_trailer,R.id.textview_trailer_link, stringList);
-            listView.setAdapter(adapter);*//*
-    }*/
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
@@ -328,7 +255,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.v(LOG_TAG, "Starting oncreateView");
+        //Log.v(LOG_TAG, "Starting oncreateView");
 
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         return rootView;

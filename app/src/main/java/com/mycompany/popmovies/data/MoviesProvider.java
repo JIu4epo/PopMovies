@@ -6,7 +6,6 @@ import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.util.Log;
 
@@ -15,12 +14,11 @@ import com.mycompany.popmovies.data.MoviesContract.ReviewsEntry;
 import com.mycompany.popmovies.data.MoviesContract.VideosEntry;
 
 /**
- * Created by Borys on 2016-11-19.
+ * Provider for PopMovies
  */
 
 public class MoviesProvider extends ContentProvider {
 
-    // The URI Matcher used by this content provider.
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     private MoviesDbHelper mOpenHelper;
 
@@ -31,6 +29,8 @@ public class MoviesProvider extends ContentProvider {
     static final int REVIEWS = 300;
     static final int REVIEWS_WITH_ID = 301;
 
+
+/**
     private static final SQLiteQueryBuilder sMoviesWithVideos;
 
     static{
@@ -43,9 +43,11 @@ public class MoviesProvider extends ContentProvider {
                         "." + MoviesEntry._ID +
                         " = " + VideosEntry.TABLE_NAME +
                         "." + VideosEntry.COLUMN_MOVIE_KEY);
-    }
-    private static final SQLiteQueryBuilder sMoviesWithReviews;
+    }*/
 
+
+/**
+    private static final SQLiteQueryBuilder sMoviesWithReviews;
     static{
         sMoviesWithReviews = new SQLiteQueryBuilder();
         //movies INNER JOIN reviews ON movies._id = reviews.movie_id
@@ -56,31 +58,20 @@ public class MoviesProvider extends ContentProvider {
                         "." + MoviesEntry._ID +
                         " = " + ReviewsEntry.TABLE_NAME +
                         "." + ReviewsEntry.COLUMN_MOVIE_KEY);
-    }
+    }*/
 
     private static final String sMovieWithID =
-            MoviesEntry.TABLE_NAME+
-                    "." + MoviesEntry._ID + " = ? ";
+            MoviesEntry.TABLE_NAME+ "." + MoviesEntry._ID + " = ? ";
+
+    private static final String sMovieWithFav =
+            MoviesEntry.TABLE_NAME+ "." + MoviesEntry.COLUMN_FAV_MOVIE + " = ? ";
+
 
     private static final String sVideoWithID =
             VideosEntry.TABLE_NAME+ "."+VideosEntry.COLUMN_MOVIE_KEY+" = ? ";
 
     private static final String sReviewWithID =
             ReviewsEntry.TABLE_NAME+ "."+ReviewsEntry.COLUMN_MOVIE_KEY+" = ? ";
-
-//    private Cursor getMovieById(Uri uri, String[] projection, String sortOrder) {
-//        String locationSetting = WeatherContract.WeatherEntry.getLocationSettingFromUri(uri);
-//        long date = WeatherContract.WeatherEntry.getDateFromUri(uri);
-//
-//        return sWeatherByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
-//                projection,
-//                sLocationSettingAndDaySelection,
-//                new String[]{locationSetting, Long.toString(date)},
-//                null,
-//                null,
-//                sortOrder
-//        );
-//    }
 
     static UriMatcher buildUriMatcher() {
         UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -90,13 +81,6 @@ public class MoviesProvider extends ContentProvider {
         uriMatcher.addURI(MoviesContract.CONTENT_AUTHORITY, MoviesContract.PATH_MOVIES+"/#", MOVIES_WITH_ID);
         uriMatcher.addURI(MoviesContract.CONTENT_AUTHORITY, MoviesContract.PATH_VIDEOS+"/#", VIDEOS_WITH_ID);
         uriMatcher.addURI(MoviesContract.CONTENT_AUTHORITY, MoviesContract.PATH_REVIEWS+"/#", REVIEWS_WITH_ID);
-
-
-
-
-
-//        int matcher = uriMatcher.match(MoviesContract.VideosEntry.CONTENT_URI);
-//        Log.v("matcher", String.valueOf(matcher));
         return uriMatcher;
     }
 
@@ -117,19 +101,12 @@ public class MoviesProvider extends ContentProvider {
                 return VideosEntry.CONTENT_TYPE;
             case REVIEWS:
                 return ReviewsEntry.CONTENT_TYPE;
-            case MOVIES_WITH_ID: {
-                Log.v("Provider, getType", "case: MOVIES_WITH_ID" );
-
+            case MOVIES_WITH_ID:
                 return MoviesEntry.CONTENT_ITEM_TYPE;
-            }
-            case VIDEOS_WITH_ID: {
-                Log.v("Provider, getType", "case: VIDEOS_WITH_ID" );
-                return MoviesEntry.CONTENT_ITEM_TYPE;
-            }
-            case REVIEWS_WITH_ID: {
-                Log.v("Provider, getType", "case: REVIEWS_WITH_ID" );
-                return MoviesEntry.CONTENT_ITEM_TYPE;
-            }
+            case VIDEOS_WITH_ID:
+                return VideosEntry.CONTENT_ITEM_TYPE;
+            case REVIEWS_WITH_ID:
+                return ReviewsEntry.CONTENT_ITEM_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -139,6 +116,7 @@ public class MoviesProvider extends ContentProvider {
     public Cursor query( Uri uri, String[] projection, String selection, String[] selectionArgs,
                          String sortOrder) {
         Cursor retCursor;
+        //Log.v("query",selection +" - "+ String.valueOf(selectionArgs[0]));
         switch (sUriMatcher.match(uri)) {
             case MOVIES: {
                 retCursor = mOpenHelper.getReadableDatabase().query(
@@ -187,7 +165,6 @@ public class MoviesProvider extends ContentProvider {
                         null,
                         null
                 );
-                //Log.v("Provider", "MOVIES_WITH_ID");
                 break;
             }
 
@@ -201,8 +178,7 @@ public class MoviesProvider extends ContentProvider {
                         null,
                         null
                 );
-                //Log.v("Provider", String.valueOf(VideosEntry.getIDFromURI(uri)));
-                //Log.v("Provider", "VIDEOS_WITH_ID");
+
                 break;
             }
             case REVIEWS_WITH_ID: {
@@ -215,8 +191,6 @@ public class MoviesProvider extends ContentProvider {
                         null,
                         null
                 );
-                //Log.v("Provider", String.valueOf(ReviewsEntry.getIDFromURI(uri)));
-                //Log.v("Provider", "REVIEW_WITH_ID");
                 break;
             }
             default:
@@ -260,7 +234,6 @@ public class MoviesProvider extends ContentProvider {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 } break;
             }
-
 
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -322,9 +295,19 @@ public class MoviesProvider extends ContentProvider {
                 rowsUpdated = db.update(ReviewsEntry.TABLE_NAME, values, selection, selectionArgs);
                 break;
             }
+            case MOVIES_WITH_ID:{
+                Log.v("update","MOVIES_WITH_ID");
+                rowsUpdated = db.update(
+                        MoviesEntry.TABLE_NAME,
+                        values,
+                        sMovieWithID,
+                        new String[]{MoviesContract.MoviesEntry.getIDFromURI(uri)});
+                break;
+            }
             default: {
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
             }
+
         }
 
         if (rowsUpdated !=0){
@@ -361,9 +344,6 @@ public class MoviesProvider extends ContentProvider {
         }
     }
 
-    // You do not need to call this method. This is a method specifically to assist the testing
-    // framework in running smoothly. You can read more at:
-    // http://developer.android.com/reference/android/content/ContentProvider.html#shutdown()
     @Override
     @TargetApi(11)
     public void shutdown() {

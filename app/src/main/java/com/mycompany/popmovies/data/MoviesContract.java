@@ -6,7 +6,7 @@ import android.net.Uri;
 import android.provider.BaseColumns;
 
 /**
- * Created by Borys on 2016-11-16.
+ * DB Contract
  */
 
 public class MoviesContract {
@@ -19,15 +19,6 @@ public class MoviesContract {
     public static final String PATH_VIDEOS = "videos";
     public static final String PATH_REVIEWS = "reviews";
 
-
-//    public static long normalizeDate(long startDate) {
-//        Time time = new Time();
-//        time.set(startDate);
-//        int julianDay = Time.getJulianDay(startDate, time.gmtoff);
-//        return time.setJulianDay(julianDay);
-//    }
-
-
     public static final class VideosEntry implements BaseColumns {
         public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_VIDEOS).build();
 
@@ -39,21 +30,19 @@ public class MoviesContract {
         public static final String COLUMN_MDB_ID = "mdb_video_id";
         public static final String COLUMN_TRAILER_PATH = "path";
 
+        public static Uri buildVideosUri(){
+            /**  content://com.mycompany.popmovies/videos  */
+            return CONTENT_URI;
+        }
+
         public static Uri buildVideosUriWithID(long id){
+            /**  content://com.mycompany.popmovies/videos/id  */
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
         public static long getIDFromURI(Uri uri){
             return Long.parseLong(uri.getPathSegments().get(1));
          }
-
-        public static Uri buildVideosUri(){
-            /**
-             * content://com.mycompany.popmovies/videos
-             * */
-            return CONTENT_URI;
-        }
-
     }
 
     public static final class ReviewsEntry implements BaseColumns {
@@ -70,21 +59,17 @@ public class MoviesContract {
         public static final String COLUMN_URL = "url";
 
 
-
+        public static Uri buildReviewsUri(){
+            /**  content://com.mycompany.popmovies/reviews  */
+            return CONTENT_URI;
+        }
         public static Uri buildReviewsUriWithID(long id){
+            /**  content://com.mycompany.popmovies/reviews/id  */
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
-
         public static long getIDFromURI(Uri uri){
             return Long.parseLong(uri.getPathSegments().get(1));
-        }
-
-        public static Uri buildReviewsUri(){
-            /**
-             * content://com.mycompany.popmovies/reviews
-             * */
-            return CONTENT_URI;
         }
     }
 
@@ -106,26 +91,17 @@ public class MoviesContract {
         public static final String COLUMN_FAV_MOVIE = "fav_movie";
 
         public static Uri buildMoviesUriWithID(long id){
-            /**
-             * content://com.mycompany.popmovies/movies/id
-             * */
+            /**  content://com.mycompany.popmovies/movies/id  */
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
         public static Uri buildMoviesUri(){
-            /**
-             * content://com.mycompany.popmovies/movies
-             * */
+            /**  content://com.mycompany.popmovies/movies  */
             return CONTENT_URI;
         }
 
         public static String getIDFromURI(Uri uri){
             return String.valueOf(uri.getPathSegments().get(1));
         }
-
-
-
-
-
     }
 }

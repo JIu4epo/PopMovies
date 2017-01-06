@@ -26,7 +26,9 @@ public class ReviewsAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        TextView tv = (TextView) view;
-        tv.setText("Review "+cursor.getPosition());
+        TextView tv = (TextView) view.findViewById(R.id.textview_review_content);
+        int position = cursor.getPosition() + 1;
+
+        tv.setText(context.getString(R.string.list_item_review_text) + position);
     }
 }

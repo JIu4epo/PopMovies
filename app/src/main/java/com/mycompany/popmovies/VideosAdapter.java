@@ -26,10 +26,9 @@ public class VideosAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        TextView tv = (TextView) view;
-        //tv.setText(cursor.getString(3));
-        //Log.d("VideosAdapter", "Running");
-        tv.setText("Trailer "+ cursor.getPosition());
+        TextView tv = (TextView) view.findViewById(R.id.textview_trailer_link);
+        int position = cursor.getPosition() + 1;
+        tv.setText(context.getString(R.string.list_item_trailer_text)+ position);
     }
 }
 

@@ -8,12 +8,15 @@
     <string name="sort_key" translatable="false">sort</string>
     <string name="sort_label">Sort Method</string>
     <string name="sort_default">popularity.desc</string>
+
     <string name="sort_label_popularity" translatable="false">Most Popular</string>
     <string name="sort_label_rating" tranclstable="false">Higher Rated</string>
+    <string name="sort_label_fav" tranclstable="false">Favourites</string>
+
     <string name="pref_sort_popularity" translatable="false">popularity.desc</string>
     <string name="pref_sort_rating" tranclstable="false">vote_average.desc</string>
+    <string name="pref_sort_fav" tranclstable="false">fav</string>
 
-    <!--<string name="trailer_link" translatable="false"></string>-->
     <string name="format_humidity">Humidity: <xliff:g id="humidity">%1.0f</xliff:g> %%</string>
     <!--"<a href=\"http://api.themoviedb.org/3/movie/"+ mMovieDetailArray[1] +"/videos\">Trailer</a>"-->
     <string name="trailer_link">
@@ -24,4 +27,9 @@
         &lt;a href=&quot;https://www.youtube.com/watch?v=
         <xliff:g id="movie_id">%1$s</xliff:g>
         &quot;&gt;Trailer&lt;/a&gt;</string>
+    <string name="list_item_trailer_text">"Trailer "</string>
+    <string name="list_item_review_text">Review</string>
+    <string name="fav_title">Show Favourites</string>
+    <string name="fav_key">fav</string>
+    <string name="fav_default">false</string>
 </resources>

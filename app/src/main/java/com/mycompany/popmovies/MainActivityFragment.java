@@ -20,8 +20,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.Toast;
 
 import com.mycompany.popmovies.data.MoviesContract;
+
+import static com.mycompany.popmovies.Utility.verifyStoragePermissions;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -83,7 +86,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
                 Cursor cursor = (Cursor) parent.getItemAtPosition(position);
 
                 if (cursor != null){
-                    Log.v("onItemClicURI",String.valueOf(MoviesContract.MoviesEntry.buildMoviesUriWithID(id)));
+                    //Log.v("onItemClicURI",String.valueOf(MoviesContract.MoviesEntry.buildMoviesUriWithID(id)));
                     Intent intent = new Intent(getActivity(), DetailActivity.class)
                             .setData(MoviesContract.MoviesEntry.buildMoviesUriWithID(id));
                     startActivity(intent);
@@ -131,39 +134,87 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onResume() {
         super.onResume();
-        Cursor cursor = getActivity().getContentResolver().query(MoviesContract.MoviesEntry.buildMoviesUri(), null, null, null, Utility.sortMethod(getActivity()));
+//        Log.v("Storage", String.valueOf(
+//                Environment.getExternalStorageDirectory().getParent()) + "\n" +
+//                Environment.getExternalStorageDirectory().getPath() + "\n" +
+//                Environment.getDataDirectory() + "\n" +
+//                Environment.getDownloadCacheDirectory() + "\n"+
+//                Environment.getRootDirectory()
+//        );
+
+
+
+        getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
+        String selection;
+        String[] selectionArgs = new String[1];
+
+        if (Utility.showFavs(getActivity()).equals("true")) {
+            selection = MoviesContract.MoviesEntry.TABLE_NAME + "." + MoviesContract.MoviesEntry.COLUMN_FAV_MOVIE + " = ? ";
+            selectionArgs[0] = Utility.showFavs(getActivity());
+        } else {
+            selection = null;
+            selectionArgs = null;
+        }
+        //Log.v("onResume", String.valueOf(selection) +" ++ "+ (selection == null ? null : selectionArgs[0]));
+
+        Cursor cursor = getActivity().getContentResolver().query(
+                MoviesContract.MoviesEntry.buildMoviesUri(),
+                null,
+                selection,
+                selectionArgs,
+                Utility.sortMethod(getActivity()));
+/**        Cursor cursor = getActivity().getContentResolver().query(
+                MoviesContract.MoviesEntry.buildMoviesUri(),
+                null,
+                null,
+                null,
+                Utility.sortMethod(getActivity()));*/
         try {
-            if (!cursor.moveToFirst()){
+            if (!cursor.moveToFirst() && Utility.showFavs(getActivity()).equals("false")){
                 Log.v("onResume","Getting data from API");
                 getDataFromAPI();
+            } else if (!cursor.moveToFirst() && Utility.showFavs(getActivity()).equals("true")){
+                Toast.makeText(getActivity(),"You don't have favourite movies", Toast.LENGTH_SHORT).show();
             } else {
                 Log.v("onResume","Table is not empty");
             }
         } catch (NullPointerException e){
             Log.e("MainActivityFragment", "ERROR", e );
         }
+        //cursor.close();
     }
 
     @Override
     public void onStart(){
         super.onStart();
+        verifyStoragePermissions(getActivity());
+        //File intSorage = getActivity().getFilesDir();
+       // File[] files = intSorage.listFiles();
+        //Log.v("Files", "Number of files - " + files.length);
+//        for (int i = 0; i < files.length; i++){
+//            Log.v("Files","File "+ i + " - "+ files[i]);
+//        }
 
-        //updateImgs();
 
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         Uri movieUri = MoviesContract.MoviesEntry.buildMoviesUri();
-        //Log.v("URI",String.valueOf(movieUri));
         String sortOrder = Utility.sortMethod(getActivity());
 
-        //Utility.sortMethod(getActivity());
-        //CursorLoader cursorLoader = new CursorLoader(getActivity(),movieUri, MOVIE_COLUMNS,null,null, sortOrder);
-        cursorLoader = new CursorLoader(getActivity(),movieUri, MOVIE_COLUMNS,null,null, sortOrder);
+        String selection;
+        String[] selectionArgs = new String[1];
 
-        //Log.v("Cursor Loader", String.valueOf(cursorLoader));
+        if (Utility.showFavs(getActivity()).equals("true")) {
+            selection = MoviesContract.MoviesEntry.TABLE_NAME + "." + MoviesContract.MoviesEntry.COLUMN_FAV_MOVIE + " = ? ";
+            selectionArgs[0] = Utility.showFavs(getActivity());
+        } else {
+            selection = null;
+            selectionArgs = null;
+        }
 
+        cursorLoader = new CursorLoader(getActivity(),movieUri, MOVIE_COLUMNS,selection,selectionArgs, sortOrder);
         return cursorLoader;
     }
 
@@ -183,5 +234,25 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         super.onActivityCreated(savedInstanceState);
 
     }
+    /** Check permissions to read and write files*/
+//    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+//    private static String[] PERMISSIONS_STORAGE = {
+//            Manifest.permission.READ_EXTERNAL_STORAGE,
+//            Manifest.permission.WRITE_EXTERNAL_STORAGE
+//    };
+//
+//    public void verifyStoragePermissions(Activity activity) {
+//        int permission = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+//
+//        if (permission != PackageManager.PERMISSION_GRANTED){
+//
+//            ActivityCompat.requestPermissions(getActivity(), PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+//            Log.v("Permission", "Got permissions");
+//        }
+//        Log.v("Permission", "Already got them");
+//
+//    }
+
+
 }
 
