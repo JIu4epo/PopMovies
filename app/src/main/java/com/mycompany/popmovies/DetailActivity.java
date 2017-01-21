@@ -1,12 +1,10 @@
 package com.mycompany.popmovies;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-
-import com.mycompany.popmovies.data.MoviesContract;
 
 public class DetailActivity extends AppCompatActivity {
 
@@ -37,13 +35,13 @@ public class DetailActivity extends AppCompatActivity {
             startActivity(intent);
             return true;
         }
-        else if (id == R.id.clear_videos_table) {
+/**        else if (id == R.id.clear_videos_table) {
             Utility.clearTable(this, MoviesContract.VideosEntry.buildVideosUri());
         }
 
         else if (id == R.id.clear_reviews_table) {
             Utility.clearTable(this, MoviesContract.ReviewsEntry.buildReviewsUri());
-        }
+        }*/
         return super.onOptionsItemSelected(item);
     }
 }

@@ -2,8 +2,6 @@ package com.mycompany.popmovies;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -52,7 +50,7 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
 
         try {
             final String REVIEWS_BASE_URL = "http://api.themoviedb.org/3/movie/"+params[0]+"/reviews";
-            Log.v(LOG_TAG, REVIEWS_BASE_URL);
+            //Log.v(LOG_TAG, REVIEWS_BASE_URL);
             final String REVIEWS_APIKEY = "api_key";
             Uri builtUri = Uri.parse(REVIEWS_BASE_URL).buildUpon().
                     appendQueryParameter(REVIEWS_APIKEY, apiKey).build();
@@ -144,7 +142,7 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
  *
  */
             /***********************************/
-            Cursor cur = mContext.getContentResolver().query(MoviesContract.ReviewsEntry.CONTENT_URI,
+/*            Cursor cur = mContext.getContentResolver().query(MoviesContract.ReviewsEntry.CONTENT_URI,
                     null, null, null, null);
 
             cVVector = new Vector<ContentValues>(cur.getCount());
@@ -164,7 +162,7 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
             } else {
                 Log.v("Result", "The only entry ::"+ resultStrs[0]);
 
-            }
+            }*/
 
             /***********************************/
 

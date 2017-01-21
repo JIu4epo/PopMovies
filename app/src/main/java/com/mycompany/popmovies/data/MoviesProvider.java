@@ -7,7 +7,6 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
-import android.util.Log;
 
 import com.mycompany.popmovies.data.MoviesContract.MoviesEntry;
 import com.mycompany.popmovies.data.MoviesContract.ReviewsEntry;
@@ -229,7 +228,7 @@ public class MoviesProvider extends ContentProvider {
                 long _id = db.insert(ReviewsEntry.TABLE_NAME, null, values);
                 if ( _id > 0 ) {
                     returnUri = ReviewsEntry.buildReviewsUriWithID(_id);
-                    Log.v("Provider Insert", "Review");
+                    //Log.v("Provider Insert", "Review");
                 } else {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 } break;
@@ -296,7 +295,7 @@ public class MoviesProvider extends ContentProvider {
                 break;
             }
             case MOVIES_WITH_ID:{
-                Log.v("update","MOVIES_WITH_ID");
+                //Log.v("update","MOVIES_WITH_ID");
                 rowsUpdated = db.update(
                         MoviesEntry.TABLE_NAME,
                         values,

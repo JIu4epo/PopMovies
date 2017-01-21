@@ -32,7 +32,9 @@ public class MoviesDbHelper extends SQLiteOpenHelper {
                 MoviesEntry.COLUMN_MDB_ID + " INTEGER NOT NULL, " +
                 MoviesEntry.COLUMN_VOTE_AVERAGE + " REAL NOT NULL, " +
                 MoviesEntry.COLUMN_POPULARITY + " REAL NOT NULL, " +
-                MoviesEntry.COLUMN_FAV_MOVIE + " BOOLEAN NOT NULL);";
+                MoviesEntry.COLUMN_FAV_MOVIE + " BOOLEAN NOT NULL," +
+                MoviesEntry.COLUMN_RUNTIME + " REAL NOT NULL" +
+                ");";
 
         final String SQL_CREATE_VIDEOS_TABLE = "CREATE TABLE " + VideosEntry.TABLE_NAME + " (" +
                 VideosEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +

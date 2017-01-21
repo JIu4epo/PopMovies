@@ -3,6 +3,8 @@ package com.mycompany.popmovies;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -10,10 +12,14 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -21,6 +27,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.mycompany.popmovies.data.MoviesContract;
@@ -33,20 +40,25 @@ import java.io.File;
  */
 public class DetailActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
     final String LOG_TAG = DetailActivityFragment.class.getSimpleName();
-    TextView tvTitle, tvDate, tvPlot, tvRaiting, tvTrailerLink, tvReview;
-    ImageView ivPoster;
+    TextView tvTitle, tvDate, tvPlot, tvRaiting, tvRuntime;
+    ImageView ivPoster, favStar;
     ListView lvTrailers, lvReviews;
     String[] items, itemLabel;
     Cursor reviewsCursor, trailersCursor;
     ImageButton ibFav;
+    ScrollView scrollView;
 
     String dBmovieID, fav;
     String mDBmovieID;
 
     ShareActionProvider mShareActionProvider;
+    String shareLine;
 
     private static final int MOVIE_LOADER = 0;
     private static final int VIDEO_LOADER = 1;
+
+
+
     private static final String[] MOVIE_COLUMNS = {
             MoviesContract.MoviesEntry.TABLE_NAME + "." + MoviesContract.MoviesEntry._ID,
             MoviesContract.MoviesEntry.COLUMN_NAME,
@@ -56,8 +68,8 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
             MoviesContract.MoviesEntry.COLUMN_MDB_ID,
             MoviesContract.MoviesEntry.COLUMN_VOTE_AVERAGE,
             MoviesContract.MoviesEntry.COLUMN_POPULARITY,
-            MoviesContract.MoviesEntry.COLUMN_FAV_MOVIE
-
+            MoviesContract.MoviesEntry.COLUMN_FAV_MOVIE,
+            MoviesContract.MoviesEntry.COLUMN_RUNTIME
     };
 
     static final int COL_MOVIE_ID = 0;
@@ -69,6 +81,8 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     static final int COL_MOVIE_VOTE_AVERAGE = 6;
     static final int COL_MOVIE_POPULARITY = 7;
     static final int COL_MOVIE_FAV_MOVIE = 8;
+    static final int COL_MOVIE_RUNTIME = 9;
+
 
     public DetailActivityFragment() {
     }
@@ -80,7 +94,6 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         if (intent == null) {
             return null;
         }
-        //Log.v(LOG_TAG, String.valueOf(intent.getData()));
         return new CursorLoader(getActivity(),intent.getData(), MOVIE_COLUMNS, null, null, null);
     }
 
@@ -96,8 +109,10 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         tvRaiting = (TextView) getView().findViewById(R.id.movie_rating);
         ivPoster = (ImageView) getView().findViewById(R.id.movie_poster);
         ibFav = (ImageButton) getView().findViewById(R.id.fav_button);
+        tvRuntime = (TextView) getView().findViewById(R.id.movie_run_time);
 
 
+        scrollView = (ScrollView) getView().findViewById(R.id.scroll_view);
 
 
 
@@ -105,14 +120,23 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         tvRaiting.setText(data.getString(COL_MOVIE_VOTE_AVERAGE));
         tvPlot.setText(data.getString(COL_MOVIE_OVERVIEW));
         tvDate.setText(data.getString(COL_MOVIE_RELEASE_DATE));
-        //Picasso.with(getActivity()).load(data.getString(COL_MOVIE_POSTER_PATH)).into(ivPoster);
+        tvRuntime.setText(data.getString(COL_MOVIE_RUNTIME));
+
+        fav = data.getString(COL_MOVIE_FAV_MOVIE);
+        if (fav.equals("true")){
+            ibFav.clearColorFilter();
+        } else {
+            ColorMatrix matrix = new ColorMatrix();
+            matrix.setSaturation(0);
+
+            ColorMatrixColorFilter filter = new ColorMatrixColorFilter(matrix);
+            ibFav.setColorFilter(filter);
+
+        }
 
 
-/*       File img2 = new File(getActivity().getFilesDir() + "/debug.png");
+        shareLine = "Check out " + data.getString(COL_MOVIE_NAME) + " #PopMovies";
 
-        if (img2.exists()){
-            img2.delete();
-        }*/
 
         /* Downloading image to internalStorage. Using cache while image is downloading */
         String imageBaseUrl = "http://image.tmdb.org/t/p/w342/";
@@ -121,38 +145,32 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
         File img = new File(getActivity().getFilesDir() + "/" +imageName);
 
-//        Log.v(LOG_TAG, "img - "+img);
-//        Log.v(LOG_TAG, "imgUrl - "+imageUrl);
-//        Log.v(LOG_TAG, "imgName - "+imageName);
-
         if (!img.exists()){
-            Log.v(LOG_TAG, "Doesn't Exist");
-
+            /*If img does not exist, it will get downloaded. Meanwhile Picasso will use image from the web*/
             Utility.imageDownload(getActivity(), imageUrl , imageName);
             Picasso.with(getActivity()).load(data.getString(COL_MOVIE_POSTER_PATH)).into(ivPoster);
         } else {
-            Log.v(LOG_TAG, "Exist");
             Picasso.with(getActivity()).load(img).into(ivPoster);
         }
         /*  */
 
         dBmovieID = data.getString(COL_MOVIE_ID);
         mDBmovieID = data.getString(COL_MOVIE_MDB_ID);
-        fav = data.getString(COL_MOVIE_FAV_MOVIE);
-        //Log.v("DetailFrag", "---" + fav);
-        //Log.v(LOG_TAG, "dBmovieID - " + dBmovieID);
-        //Log.v(LOG_TAG, "mDBmovieID - " + mDBmovieID);
 
 
         ibFav.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (fav.equals("false")){
-                    Log.v("onClick"," It's true");
                     fav = "true";
+                    ibFav.clearColorFilter();
                 } else {
-                    Log.v("onClick"," It's false");
                     fav = "false";
+                    ColorMatrix matrix = new ColorMatrix();
+                    matrix.setSaturation(0);
+
+                    ColorMatrixColorFilter filter = new ColorMatrixColorFilter(matrix);
+                    ibFav.setColorFilter(filter);
                 }
 
                 final ContentValues moviesValues = new ContentValues();
@@ -226,7 +244,16 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                 startActivity(sendIntent);
             }
         });
+
+        if (mShareActionProvider != null){
+            Log.v(LOG_TAG, "mShareActionProvider is not null");
+            mShareActionProvider.setShareIntent(createShareForecastIntent());
+        }
+
+
+        scrollView.smoothScrollTo(0,0);
         //cursor.close();
+
     }
 
 
@@ -242,12 +269,6 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-
-    }
-
-    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
@@ -255,21 +276,11 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        //Log.v(LOG_TAG, "Starting oncreateView");
-
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
+        setHasOptionsMenu(true);
         return rootView;
     }
 
-    private Intent createShareForecastIntent (String uri){
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
-        //intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-        intent.setType("text/html");
-        intent.setData(Uri.parse(uri));
-        return intent;
-    }
 
     /**** Method for Setting the Height of the ListView dynamically.
      **** Hack to fix the issue of not showing all the items of the ListView
@@ -295,6 +306,21 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         listView.setLayoutParams(params);
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_detail_fragment, menu);
+        MenuItem item = menu.findItem(R.id.action_share);
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
+        if (shareLine != null){
+            mShareActionProvider.setShareIntent(createShareForecastIntent());
+        }
+    }
 
-
+    private Intent createShareForecastIntent (){
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        intent.setType("text/plane");
+        intent.putExtra(Intent.EXTRA_TEXT, shareLine);
+        return intent;
+    }
 }

@@ -2,8 +2,6 @@ package com.mycompany.popmovies;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -54,7 +52,7 @@ public class FetchVideosTask extends AsyncTask<String, Void, Void> {
 
         try {
             final String VIDEOS_BASE_URL = "http://api.themoviedb.org/3/movie/"+params[0]+"/videos";
-            Log.v(LOG_TAG, VIDEOS_BASE_URL);
+            //Log.v(LOG_TAG, VIDEOS_BASE_URL);
             final String VIDEOS_APIKEY = "api_key";
             Uri builtUri = Uri.parse(VIDEOS_BASE_URL).buildUpon().
                     appendQueryParameter(VIDEOS_APIKEY, apiKey).build();
@@ -149,7 +147,7 @@ public class FetchVideosTask extends AsyncTask<String, Void, Void> {
  *
  */
             /***********************************/
-            Cursor cur = mContext.getContentResolver().query(MoviesContract.VideosEntry.CONTENT_URI,
+/*            Cursor cur = mContext.getContentResolver().query(MoviesContract.VideosEntry.CONTENT_URI,
                     null, null, null, null);
 
             cVVector = new Vector<ContentValues>(cur.getCount());
@@ -164,7 +162,7 @@ public class FetchVideosTask extends AsyncTask<String, Void, Void> {
             //Log.v(LOG_TAG, "FetchVideosTask Complete. " + cVVector.size() + " Inserted");
 
             String[] resultStrs = convertContentValuesToUXFormat(cVVector);
-            //Log.v("Result", resultStrs[0] +" :: "+resultStrs[1]);
+            //Log.v("Result", resultStrs[0] +" :: "+resultStrs[1]);*/
 
             /***********************************/
 

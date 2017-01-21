@@ -89,6 +89,7 @@ public class MoviesContract {
         public static final String COLUMN_VOTE_AVERAGE = "vote_average";
         public static final String COLUMN_POPULARITY = "popularity";
         public static final String COLUMN_FAV_MOVIE = "fav_movie";
+        public static final String COLUMN_RUNTIME = "runtime";
 
         public static Uri buildMoviesUriWithID(long id){
             /**  content://com.mycompany.popmovies/movies/id  */

@@ -3,7 +3,6 @@ package com.mycompany.popmovies;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -96,6 +95,8 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
                 }
             }
         }
+
+
         return null;
     }
 
@@ -139,6 +140,7 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
             moviesValues.put(MoviesContract.MoviesEntry.COLUMN_VOTE_AVERAGE, movieInfo.getString(TMDB_RAITING));
             moviesValues.put(MoviesContract.MoviesEntry.COLUMN_POPULARITY, movieInfo.getString(TMDB_POPULARITY));
             moviesValues.put(MoviesContract.MoviesEntry.COLUMN_FAV_MOVIE, "false");
+            moviesValues.put(MoviesContract.MoviesEntry.COLUMN_RUNTIME, 0);
 
             cVVector.add(moviesValues);
         }
@@ -157,7 +159,7 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
  *
  */
     /***********************************/
-        Cursor cur = mContext.getContentResolver().query(MoviesContract.MoviesEntry.CONTENT_URI,
+/*        Cursor cur = mContext.getContentResolver().query(MoviesContract.MoviesEntry.CONTENT_URI,
                 null, null, null, null);
 
         cVVector = new Vector<ContentValues>(cur.getCount());
@@ -171,8 +173,8 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
 
         Log.v(LOG_TAG, "FetchWeatherTask Complete. " + cVVector.size() + " Inserted");
 
-        String[] resultStrs = convertContentValuesToUXFormat(cVVector);
-        Log.v("Result", resultStrs[0] +" :: "+resultStrs[1]);
+        String[] resultStrs = convertContentValuesToUXFormat(cVVector);*/
+        //Log.v("Result", resultStrs[0] +" :: "+resultStrs[1]);
         //cur.close();
     /***********************************/
 
@@ -258,9 +260,6 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
                 null,
                 null,
                 null);
-//        if (cur.moveToFirst()){
-//            Log.v(LOG_TAG, "Some umber,  probably 20" + String.valueOf(cur.getCount()));
-//        }
         cur.moveToFirst();
         do {
             FetchVideosTask fetchVideosTask = new FetchVideosTask(mContext);
@@ -268,11 +267,12 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
 
             FetchReviewsTask fetchReviewsTask = new FetchReviewsTask(mContext);
             fetchReviewsTask.execute(cur.getString(1), cur.getString(0));
-            //Log.v(LOG_TAG, "--"+cur.getString(0));
+
+            FetchMoreMovieInfoTask fetchMoreMovieInfoTask = new FetchMoreMovieInfoTask(mContext);
+            fetchMoreMovieInfoTask.execute(cur.getString(1), cur.getString(0));
+
+
         } while (cur.moveToNext());
-
-
-
 
         super.onPostExecute(aVoid);
         cur.close();
