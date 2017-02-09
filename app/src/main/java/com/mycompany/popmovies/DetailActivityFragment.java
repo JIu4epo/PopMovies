@@ -41,21 +41,23 @@ import java.io.File;
 public class DetailActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
     final String LOG_TAG = DetailActivityFragment.class.getSimpleName();
     TextView tvTitle, tvDate, tvPlot, tvRaiting, tvRuntime;
+    static final String DETAIL_URI = "URI";
     ImageView ivPoster, favStar;
     ListView lvTrailers, lvReviews;
-    String[] items, itemLabel;
     Cursor reviewsCursor, trailersCursor;
     ImageButton ibFav;
     ScrollView scrollView;
 
-    String dBmovieID, fav;
+    String dBmovieID, fav, runtime, raiting;
     String mDBmovieID;
+    Uri mUri;
 
     ShareActionProvider mShareActionProvider;
     String shareLine;
 
     private static final int MOVIE_LOADER = 0;
     private static final int VIDEO_LOADER = 1;
+    private static final int REVIEW_LOADER = 2;
 
 
 
@@ -72,6 +74,23 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
             MoviesContract.MoviesEntry.COLUMN_RUNTIME
     };
 
+    private static final String[] VIDEO_COLUMNS = {
+            MoviesContract.VideosEntry.TABLE_NAME + "." + MoviesContract.VideosEntry._ID,
+            MoviesContract.VideosEntry.COLUMN_MOVIE_KEY,
+            MoviesContract.VideosEntry.COLUMN_MDB_ID,
+            MoviesContract.VideosEntry.COLUMN_TRAILER_PATH
+    };
+
+    private static final String[] REVIEW_COLUMNS = {
+            MoviesContract.ReviewsEntry.TABLE_NAME + "." + MoviesContract.ReviewsEntry._ID,
+            MoviesContract.ReviewsEntry.COLUMN_MOVIE_KEY,
+            MoviesContract.ReviewsEntry.COLUMN_MDB_ID,
+            MoviesContract.ReviewsEntry.COLUMN_CONTENT,
+            MoviesContract.ReviewsEntry.COLUMN_AUTHOR,
+            MoviesContract.ReviewsEntry.COLUMN_URL
+    };
+
+
     static final int COL_MOVIE_ID = 0;
     static final int COL_MOVIE_NAME = 1;
     static final int COL_MOVIE_POSTER_PATH = 2;
@@ -83,6 +102,13 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     static final int COL_MOVIE_FAV_MOVIE = 8;
     static final int COL_MOVIE_RUNTIME = 9;
 
+    static final int COL_VIDEO_ID = 0;
+    static final int COL_VIDEO_MOVIE_KEY = 1;
+    static final int COL_VIDEO_MDB_ID = 2;
+    static final int COL_VIDEO_TRAILER_PATH = 3;
+
+
+
 
     public DetailActivityFragment() {
     }
@@ -90,169 +116,191 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Intent intent = getActivity().getIntent();
-        if (intent == null) {
-            return null;
+
+
+        //Log.v(LOG_TAG, "mDBmovieID - "+mDBmovieID+", dBmovieID - "+dBmovieID);
+        Loader<Cursor> loader;
+        switch (id){
+            case MOVIE_LOADER:{
+                loader = new CursorLoader(getActivity(),mUri, MOVIE_COLUMNS, null, null, null);
+                break;
+            }
+            case VIDEO_LOADER:{
+
+                Uri uri = MoviesContract.VideosEntry.buildVideosUriWithID(MoviesContract.VideosEntry.getIDFromURI(mUri));
+                loader = new CursorLoader(getActivity(),uri, VIDEO_COLUMNS, null, null, null);
+                break;
+            }
+            case REVIEW_LOADER:{
+                loader = new CursorLoader(getActivity(),MoviesContract.ReviewsEntry.buildReviewsUriWithID(MoviesContract.ReviewsEntry.getIDFromURI(mUri)), REVIEW_COLUMNS, null, null, null);
+                break;
+            }
+
+            default: {
+                return null;
+            }
         }
-        return new CursorLoader(getActivity(),intent.getData(), MOVIE_COLUMNS, null, null, null);
+        return loader;
     }
 
     @Override
-    public void onLoadFinished(Loader<Cursor> loader, final Cursor data) {
-        if (!data.moveToFirst()){
-            return;
-        }
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        switch (loader.getId()) {
 
-        tvTitle = (TextView) getView().findViewById(R.id.movie_title);
-        tvDate = (TextView) getView().findViewById(R.id.movie_date);
-        tvPlot = (TextView) getView().findViewById(R.id.movie_plot);
-        tvRaiting = (TextView) getView().findViewById(R.id.movie_rating);
-        ivPoster = (ImageView) getView().findViewById(R.id.movie_poster);
-        ibFav = (ImageButton) getView().findViewById(R.id.fav_button);
-        tvRuntime = (TextView) getView().findViewById(R.id.movie_run_time);
+            case MOVIE_LOADER: {
 
+            if (!data.moveToFirst()) {
+                    return;
+                }
 
-        scrollView = (ScrollView) getView().findViewById(R.id.scroll_view);
-
+                /**Update runtime*/
+                if (data.getString(COL_MOVIE_RUNTIME).equals("0")){
+                    FetchMoreMovieInfoTask fetchMoreMovieInfoTask = new FetchMoreMovieInfoTask(getActivity());
+                    fetchMoreMovieInfoTask.execute(mDBmovieID, dBmovieID);
+                }
 
 
-        tvTitle.setText(data.getString(COL_MOVIE_NAME));
-        tvRaiting.setText(data.getString(COL_MOVIE_VOTE_AVERAGE));
-        tvPlot.setText(data.getString(COL_MOVIE_OVERVIEW));
-        tvDate.setText(data.getString(COL_MOVIE_RELEASE_DATE));
-        tvRuntime.setText(data.getString(COL_MOVIE_RUNTIME));
+                tvTitle.setText(data.getString(COL_MOVIE_NAME));
+                raiting = data.getString(COL_MOVIE_VOTE_AVERAGE) + "/10";
+                tvRaiting.setText(raiting);
+                tvPlot.setText(data.getString(COL_MOVIE_OVERVIEW));
+                tvDate.setText(Utility.movieYearExtractor(data.getString(COL_MOVIE_RELEASE_DATE)));
+                runtime = data.getString(COL_MOVIE_RUNTIME) + "min";
+                tvRuntime.setText(runtime);
 
-        fav = data.getString(COL_MOVIE_FAV_MOVIE);
-        if (fav.equals("true")){
-            ibFav.clearColorFilter();
-        } else {
-            ColorMatrix matrix = new ColorMatrix();
-            matrix.setSaturation(0);
-
-            ColorMatrixColorFilter filter = new ColorMatrixColorFilter(matrix);
-            ibFav.setColorFilter(filter);
-
-        }
-
-
-        shareLine = "Check out " + data.getString(COL_MOVIE_NAME) + " #PopMovies";
-
-
-        /* Downloading image to internalStorage. Using cache while image is downloading */
-        String imageBaseUrl = "http://image.tmdb.org/t/p/w342/";
-        String imageName = data.getString(COL_MOVIE_POSTER_PATH).replace(imageBaseUrl, "");
-        String imageUrl = data.getString(COL_MOVIE_POSTER_PATH);
-
-        File img = new File(getActivity().getFilesDir() + "/" +imageName);
-
-        if (!img.exists()){
-            /*If img does not exist, it will get downloaded. Meanwhile Picasso will use image from the web*/
-            Utility.imageDownload(getActivity(), imageUrl , imageName);
-            Picasso.with(getActivity()).load(data.getString(COL_MOVIE_POSTER_PATH)).into(ivPoster);
-        } else {
-            Picasso.with(getActivity()).load(img).into(ivPoster);
-        }
-        /*  */
-
-        dBmovieID = data.getString(COL_MOVIE_ID);
-        mDBmovieID = data.getString(COL_MOVIE_MDB_ID);
-
-
-        ibFav.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (fav.equals("false")){
-                    fav = "true";
+                fav = data.getString(COL_MOVIE_FAV_MOVIE);
+                if (fav.equals("true")) {
                     ibFav.clearColorFilter();
                 } else {
-                    fav = "false";
                     ColorMatrix matrix = new ColorMatrix();
                     matrix.setSaturation(0);
 
                     ColorMatrixColorFilter filter = new ColorMatrixColorFilter(matrix);
                     ibFav.setColorFilter(filter);
+
+                }
+                shareLine = "Check out " + data.getString(COL_MOVIE_NAME) + " #PopMovies";
+
+        /* Downloading image to internalStorage. Using cache while image is downloading */
+                String imageBaseUrl = "http://image.tmdb.org/t/p/w342/";
+                String imageName = data.getString(COL_MOVIE_POSTER_PATH).replace(imageBaseUrl, "");
+                String imageUrl = data.getString(COL_MOVIE_POSTER_PATH);
+
+                File img = new File(getActivity().getFilesDir() + "/" + imageName);
+
+                if (!img.exists()) {
+            /*If img does not exist, it will get downloaded. Meanwhile Picasso will use image from the web*/
+                    Utility.imageDownload(getActivity(), imageUrl, imageName);
+                    Picasso.with(getActivity()).load(data.getString(COL_MOVIE_POSTER_PATH)).into(ivPoster);
+                } else {
+                    Picasso.with(getActivity()).load(img).into(ivPoster);
                 }
 
-                final ContentValues moviesValues = new ContentValues();
-                moviesValues.put(MoviesContract.MoviesEntry.COLUMN_FAV_MOVIE, fav);
+            ibFav.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if (fav.equals("false")) {
+                            fav = "true";
+                            ibFav.clearColorFilter();
+                        } else {
+                            fav = "false";
+                            ColorMatrix matrix = new ColorMatrix();
+                            matrix.setSaturation(0);
 
-                int rowsUpdated = getActivity().getContentResolver().update(
-                        MoviesContract.MoviesEntry.buildMoviesUriWithID(Long.parseLong(dBmovieID)),
-                        moviesValues,
-                        null,
-                        null
-                );
+                            ColorMatrixColorFilter filter = new ColorMatrixColorFilter(matrix);
+                            ibFav.setColorFilter(filter);
+                        }
+
+                        final ContentValues moviesValues = new ContentValues();
+                        moviesValues.put(MoviesContract.MoviesEntry.COLUMN_FAV_MOVIE, fav);
+
+                        int rowsUpdated = getActivity().getContentResolver().update(
+                                MoviesContract.MoviesEntry.buildMoviesUriWithID(Long.parseLong(dBmovieID)),
+                                moviesValues,
+                                null,
+                                null
+                        );
+                    }
+                });
+                break;
             }
-        });
+                case VIDEO_LOADER: {
+
+                    //} else if (loader.getId() == VIDEO_LOADER){
+                    lvTrailers = (ListView) getView().findViewById(R.id.listview_trailers);
+                    trailersCursor = data;
+                    VideosAdapter vAdapter;
+
+                    if (!trailersCursor.moveToFirst()) {
+                        vAdapter = new VideosAdapter(null, getActivity(), 0);
+                        FetchVideosTask fetchVideosTask = new FetchVideosTask(getActivity(), vAdapter);
+                        fetchVideosTask.execute(mDBmovieID, dBmovieID);
+                        //return;
+                    }
+                    /** Trailers */
 
 
+                    else {
+                        trailersCursor.moveToFirst();
+                        vAdapter = new VideosAdapter(trailersCursor, getActivity(), 0);
+                    }
 
-        lvTrailers = (ListView) getView().findViewById(R.id.listview_trailers);
-        lvReviews = (ListView) getView().findViewById(R.id.listview_reviews);
 
+                    lvTrailers.setAdapter(vAdapter);
+                    setListViewHeightBasedOnChildren(lvTrailers);
+                    lvTrailers.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                            Intent sendIntent = new Intent();
+                            sendIntent.setAction(Intent.ACTION_VIEW);
+                            sendIntent.setData(Uri.parse(trailersCursor.getString(3)));
+                            startActivity(sendIntent);
+                        }
+                    });
 
+                    break;
+                }
 
-        trailersCursor = getActivity().getContentResolver().query(
-                MoviesContract.VideosEntry.buildVideosUriWithID(Long.parseLong(dBmovieID)),
-                null,
-                null,
-                null,
-                null);
+            case REVIEW_LOADER: {
 
-        reviewsCursor = getActivity().getContentResolver().query(
+/*        reviewsCursor = getActivity().getContentResolver().query(
                 MoviesContract.ReviewsEntry.buildReviewsUriWithID(Long.parseLong(dBmovieID)),
                 null,
                 null,
                 null,
-                null);
+                null);*/
+                lvReviews = (ListView) getView().findViewById(R.id.listview_reviews);
+                reviewsCursor = data;
+                ReviewsAdapter rAdapter;
 
-        if (!trailersCursor.moveToFirst()){
-            FetchVideosTask fetchVideosTask = new FetchVideosTask(getActivity());
-            fetchVideosTask.execute(mDBmovieID, dBmovieID);
+                if (!reviewsCursor.moveToFirst()) {
+                    rAdapter = new ReviewsAdapter(null, getActivity(), 0);
+                    FetchReviewsTask fetchReviewsTask = new FetchReviewsTask(getActivity(), rAdapter);
+                    fetchReviewsTask.execute(mDBmovieID, dBmovieID);
+                } else {
+                    reviewsCursor.moveToFirst();
+                    rAdapter = new ReviewsAdapter(reviewsCursor, getActivity(), 0);
+                }
+                lvReviews.setAdapter(rAdapter);
+                setListViewHeightBasedOnChildren(lvReviews);
+
+                lvReviews.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                        Intent sendIntent = new Intent();
+                        sendIntent.setAction(Intent.ACTION_VIEW);
+                        sendIntent.setData(Uri.parse(reviewsCursor.getString(5)));
+                        startActivity(sendIntent);
+                    }
+                });
+
+                break;
+            } default:
         }
-
-        if (!reviewsCursor.moveToFirst()){
-            FetchReviewsTask fetchReviewsTask = new FetchReviewsTask(getActivity());
-            fetchReviewsTask.execute(mDBmovieID, dBmovieID);
-        }
-
-            VideosAdapter vAdapter = new VideosAdapter(trailersCursor, getActivity(), 0);
-            lvTrailers.setAdapter(vAdapter);
-
-            ReviewsAdapter rAdapter = new ReviewsAdapter(reviewsCursor, getActivity(), 0);
-            lvReviews.setAdapter(rAdapter);
-        setListViewHeightBasedOnChildren(lvReviews);
-        setListViewHeightBasedOnChildren(lvTrailers);
-
-
-        lvTrailers.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                Intent sendIntent = new Intent();
-                sendIntent.setAction(Intent.ACTION_VIEW);
-                sendIntent.setData(Uri.parse(trailersCursor.getString(3)));
-                startActivity(sendIntent);
-            }
-        });
-
-        lvReviews.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                Intent sendIntent = new Intent();
-                sendIntent.setAction(Intent.ACTION_VIEW);
-                sendIntent.setData(Uri.parse(reviewsCursor.getString(5)));
-                startActivity(sendIntent);
-            }
-        });
-
-        if (mShareActionProvider != null){
-            Log.v(LOG_TAG, "mShareActionProvider is not null");
+        if (mShareActionProvider != null) {
             mShareActionProvider.setShareIntent(createShareForecastIntent());
         }
-
-
-        scrollView.smoothScrollTo(0,0);
-        //cursor.close();
+        scrollView.smoothScrollTo(0, 0);
 
     }
 
@@ -264,8 +312,78 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        getLoaderManager().initLoader(MOVIE_LOADER, null, this);
+        Log.v(LOG_TAG, "onActivityCreated");
         super.onActivityCreated(savedInstanceState);
+
+        Intent intent = getActivity().getIntent();
+        if (intent.getData() == null && getArguments() == null){
+            Log.v(LOG_TAG, "No intent and no arguments");
+
+            Cursor cursor = getActivity()
+                    .getContentResolver()
+                    .query(
+                            MoviesContract.MoviesEntry.buildMoviesUri(),
+                            MOVIE_COLUMNS,
+                            null,
+                            null,
+                            Utility.sortMethod(getActivity())
+
+                    );
+            if (cursor == null || !cursor.moveToFirst()){
+                Log.v(LOG_TAG, "No cursor OR no moveToFirst");
+                //TODO: Put placeholder layout here because no data in DB
+                return;
+            } else {
+                mDBmovieID = cursor.getString(COL_MOVIE_MDB_ID);
+                dBmovieID = "1";
+                mUri = Uri.parse("content://com.mycompany.popmovies/movies/"+dBmovieID);
+                cursor.close();
+                Log.v(LOG_TAG, "dBmovieID - " + dBmovieID + ", mDBmovieID - " + mDBmovieID + ", mUri - " + mUri);
+            }
+/*            mUri = Uri.parse("content://com.mycompany.popmovies/movies/1");
+            dBmovieID = String.valueOf(MoviesContract.VideosEntry.getIDFromURI(mUri));
+
+            Cursor cursor        = getActivity()
+                    .getContentResolver()
+                    .query(
+                            MoviesContract.MoviesEntry.buildMoviesUriWithID(Long.parseLong(dBmovieID)),
+                            MOVIE_COLUMNS,
+                            null,
+                            null,
+                            null
+
+                            );
+            if (cursor !=null && cursor.moveToFirst())
+            mDBmovieID = cursor.getString(COL_MOVIE_MDB_ID);
+            cursor.close();
+
+            Log.v(LOG_TAG, "mUri - " + mUri + ", mDBmovieID - " + mDBmovieID);*/
+            //return;
+        } else {
+            Log.v(LOG_TAG, "else");
+            if (intent == null || intent.getData() == null) {
+                Bundle arguments = getArguments();
+                if (arguments != null) {
+                    mUri = arguments.getParcelable(DETAIL_URI);
+                    mDBmovieID = arguments.getString("mdbID");
+                    dBmovieID = String.valueOf(MoviesContract.VideosEntry.getIDFromURI(mUri));
+                    Log.v(LOG_TAG, "mUri - " + mUri + ", mDBmovieID - " + mDBmovieID);
+                }
+
+
+            } else {
+                mUri = intent.getData();
+                mDBmovieID = intent.getStringExtra("mdbID");
+                dBmovieID = String.valueOf(MoviesContract.VideosEntry.getIDFromURI(mUri));
+            }
+
+
+
+        }
+        getLoaderManager().initLoader(MOVIE_LOADER, null, this);
+        getLoaderManager().initLoader(VIDEO_LOADER, null, this);
+        getLoaderManager().initLoader(REVIEW_LOADER, null, this);
+
     }
 
     @Override
@@ -276,8 +394,42 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Intent intent = getActivity().getIntent();
+        if (intent.getData() == null && getArguments() == null) {
+            Log.v(LOG_TAG, "No intent and no arguments");
+
+            Cursor cursor = getActivity()
+                    .getContentResolver()
+                    .query(
+                            MoviesContract.MoviesEntry.buildMoviesUri(),
+                            MOVIE_COLUMNS,
+                            null,
+                            null,
+                            Utility.sortMethod(getActivity())
+
+                    );
+            if (cursor == null || !cursor.moveToFirst()) {
+                Log.v(LOG_TAG, "No cursor OR no moveToFirst");
+                //TODO: Put placeholder layout here because no data in DB
+                return inflater.inflate(R.layout.fragment_detail_placeholder, container, false);
+            } else {
+
+            }
+        }
+
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         setHasOptionsMenu(true);
+        Log.v(LOG_TAG, "onCreateView");
+
+        tvTitle = (TextView) rootView.findViewById(R.id.movie_title);
+        tvDate = (TextView) rootView.findViewById(R.id.movie_date);
+        tvPlot = (TextView) rootView.findViewById(R.id.movie_plot);
+        tvRaiting = (TextView) rootView.findViewById(R.id.movie_rating);
+        ivPoster = (ImageView) rootView.findViewById(R.id.movie_poster);
+        ibFav = (ImageButton) rootView.findViewById(R.id.fav_button);
+        tvRuntime = (TextView) rootView.findViewById(R.id.movie_run_time);
+
+        scrollView = (ScrollView) rootView.findViewById(R.id.scroll_view);
         return rootView;
     }
 

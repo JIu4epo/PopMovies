@@ -134,4 +134,3 @@ public class FetchMoreMovieInfoTask extends AsyncTask<String, Void, Void> {
     }
 
 }
-

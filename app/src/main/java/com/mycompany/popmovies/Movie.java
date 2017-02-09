@@ -13,19 +13,27 @@ public class Movie implements Serializable{
     private String overview;
     private String rating;
     private String date;
+    private String popularity;
+    private String runtime;
     static final long serialVersionUID = 42L;
+
+
+
+
 
     Movie(){
 
     }
 
-    Movie(String id, String title, String posterUri, String overview, String rating, String date){
+    Movie(String id, String title, String posterUri, String overview, String rating, String date, String popularity, String runtime){
         this.id = id;
         this.title = title;
         this.posterUri = posterUri;
         this.overview = overview;
         this.rating = rating;
         this.date = date;
+        this.popularity = popularity;
+        this.runtime = runtime;
     }
 
     public String getTitle() {
@@ -74,5 +82,21 @@ public class Movie implements Serializable{
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getPopularity() {
+        return popularity;
+    }
+
+    public void setPopularity(String popularity) {
+        this.popularity = popularity;
+    }
+
+    public String getRuntime() {
+        return runtime;
+    }
+
+    public void setRuntime(String runtime) {
+        this.runtime = runtime;
     }
 }

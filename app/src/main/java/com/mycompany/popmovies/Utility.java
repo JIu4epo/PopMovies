@@ -119,6 +119,10 @@ public class Utility {
 
     }
 
+    public static String movieYearExtractor(String string){
+        return string.substring(0,4);
+    }
+
 
 }
 

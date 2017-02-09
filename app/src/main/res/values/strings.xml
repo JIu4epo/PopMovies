@@ -32,4 +32,6 @@
     <string name="fav_title">Show Favourites</string>
     <string name="fav_key">fav</string>
     <string name="fav_default">false</string>
+    <string name="listview_trailers_title">Trailers:</string>
+    <string name="listview_reviews_title">Reviews:</string>
 </resources>

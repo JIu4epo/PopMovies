@@ -2,6 +2,7 @@ package com.mycompany.popmovies;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -28,9 +29,11 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
 
     private final String LOG_TAG = FetchReviewsTask.class.getSimpleName();
     private final Context mContext;
+    ReviewsAdapter mAdapter;
 
-    FetchReviewsTask(Context context){
+    FetchReviewsTask(Context context, ReviewsAdapter adapter){
         mContext = context;
+        mAdapter = adapter;
     }
     String dBmovieID;
 
@@ -58,6 +61,7 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
             urlCOnnection = (HttpURLConnection) url.openConnection();
             urlCOnnection.setRequestMethod("GET");
             urlCOnnection.connect();
+            Log.v(LOG_TAG, "URI - "+String .valueOf(url));
 
             InputStream inputStream = urlCOnnection.getInputStream();
             StringBuffer buffer = new StringBuffer();
@@ -144,7 +148,6 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
             /***********************************/
 /*            Cursor cur = mContext.getContentResolver().query(MoviesContract.ReviewsEntry.CONTENT_URI,
                     null, null, null, null);
-
             cVVector = new Vector<ContentValues>(cur.getCount());
             if ( cur.moveToFirst() ) {
                 do {
@@ -153,15 +156,12 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
                     cVVector.add(cv);
                 } while (cur.moveToNext());
             }
-
             Log.v(LOG_TAG, "FetchReviewsTask Complete. " + cVVector.size() + " Inserted");
-
             String[] resultStrs = convertContentValuesToUXFormat(cVVector);
             if (resultStrs.length > 1 ) {
                 Log.v("Result", resultStrs[0] + " :: " + resultStrs[1]);
             } else {
                 Log.v("Result", "The only entry ::"+ resultStrs[0]);
-
             }*/
 
             /***********************************/
@@ -175,6 +175,13 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
     /** TODO: Uncoment if need to check insertion into DB  */
     @Override
     protected void onPostExecute(Void aVoid) {
+        Cursor cursor = mContext.getContentResolver().query(
+                MoviesContract.ReviewsEntry.buildReviewsUriWithID(Long.parseLong(dBmovieID)),
+                null,
+                null,
+                null,
+                null);
+        mAdapter.swapCursor(cursor);
         super.onPostExecute(aVoid);
     }
 

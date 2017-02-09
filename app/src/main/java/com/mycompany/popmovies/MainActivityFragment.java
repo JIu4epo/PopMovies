@@ -1,6 +1,5 @@
 package com.mycompany.popmovies;
 
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
@@ -30,6 +29,10 @@ import static com.mycompany.popmovies.Utility.verifyStoragePermissions;
  * A placeholder fragment containing a simple view.
  */
 public class MainActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
+    final String LOG_TAG = MainActivityFragment.class.getSimpleName();
+    private int mPosition = GridView.INVALID_POSITION;
+    GridView mGridView;
+    private static final String SELECTED_KEY = "selected_option";
 
     CursorLoader cursorLoader;
     private static final int MOVIE_LOADER = 0;
@@ -57,8 +60,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     static final int COL_MOVIE_FAV_MOVIE = 8;
 
 
-    GridView gridView;
-    //private GridViewAdapter mGridViewAdapter;
     private GridAdapter mGridAdapter;
 
     public MainActivityFragment() {
@@ -67,39 +68,30 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-
         mGridAdapter = new GridAdapter(null, getActivity(), 0);
-
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        mGridView = (GridView) rootView.findViewById(R.id.gridview_movie);
+        mGridView.setAdapter(mGridAdapter);
 
-        //mGridViewAdapter = new GridViewAdapter(getActivity());
-        //Uri uri = MoviesContract.MoviesEntry.buildMoviesUriWithID()
-
-        gridView = (GridView) rootView.findViewById(R.id.gridview_movie);
-        gridView.setAdapter(mGridAdapter);
-
-
-
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Cursor cursor = (Cursor) parent.getItemAtPosition(position);
 
                 if (cursor != null){
-                    //Log.v("onItemClicURI",String.valueOf(MoviesContract.MoviesEntry.buildMoviesUriWithID(id)));
-                    Intent intent = new Intent(getActivity(), DetailActivity.class)
-                            .setData(MoviesContract.MoviesEntry.buildMoviesUriWithID(id));
-                    startActivity(intent);
+/*                    Intent intent = new Intent(getActivity(), DetailActivity.class)
+                            .setData(MoviesContract.MoviesEntry.buildMoviesUriWithID(id))
+                            .putExtra("mdbID", cursor.getString(COL_MOVIE_MDB_ID));
+                    startActivity(intent);*/
+                    ((Callback) getActivity()).onItemSelected(MoviesContract.MoviesEntry.buildMoviesUriWithID(id), cursor.getString(COL_MOVIE_MDB_ID));
                 }
-
-
-
-                //Movie movieDetails = mGridViewAdapter.getItem(position);
-
-                //Intent intent = new Intent(getActivity(), DetailActivity.class).putExtra("movie",movieDetails);
-
+                mPosition = position;
             }
         });
+        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)){
+            mPosition = savedInstanceState.getInt(SELECTED_KEY);
+        }
+
         return rootView;
     }
 
@@ -119,9 +111,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public boolean onOptionsItemSelected(MenuItem item){
         return super.onOptionsItemSelected(item);
     }
-
-
-
 
     private void getDataFromAPI(){
         FetchMovieInfoTask movieInfoTask = new FetchMovieInfoTask(getContext());
@@ -163,12 +152,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
                 selection,
                 selectionArgs,
                 Utility.sortMethod(getActivity()));
-/**        Cursor cursor = getActivity().getContentResolver().query(
-                MoviesContract.MoviesEntry.buildMoviesUri(),
-                null,
-                null,
-                null,
-                Utility.sortMethod(getActivity()));*/
+
         try {
             if (!cursor.moveToFirst() && Utility.showFavs(getActivity()).equals("false")){
                 Log.v("onResume","Getting data from API");
@@ -189,7 +173,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         super.onStart();
         verifyStoragePermissions(getActivity());
         //File intSorage = getActivity().getFilesDir();
-       // File[] files = intSorage.listFiles();
+        // File[] files = intSorage.listFiles();
         //Log.v("Files", "Number of files - " + files.length);
 //        for (int i = 0; i < files.length; i++){
 //            Log.v("Files","File "+ i + " - "+ files[i]);
@@ -221,6 +205,10 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         mGridAdapter.swapCursor(cursor);
+
+        if (mPosition != GridView.INVALID_POSITION){
+            mGridView.smoothScrollToPosition(mPosition);
+        }
     }
 
     @Override
@@ -254,5 +242,15 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 //    }
 
 
-}
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        if (mPosition != GridView.INVALID_POSITION){
+            outState.putInt(SELECTED_KEY, mPosition);
+        }
+        super.onSaveInstanceState(outState);
+    }
 
+    public interface Callback {
+        public void onItemSelected(Uri uri, String mdbID);
+    }
+}

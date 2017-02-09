@@ -2,6 +2,7 @@ package com.mycompany.popmovies;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -29,12 +30,16 @@ public class FetchVideosTask extends AsyncTask<String, Void, Void> {
 
     private final String LOG_TAG = FetchVideosTask.class.getSimpleName();
     private final Context mContext;
+    VideosAdapter mAdapter;
 
-    FetchVideosTask(Context context){
+
+    FetchVideosTask(Context context, VideosAdapter adapter){
         mContext = context;
+        mAdapter = adapter;
     }
     String dBmovieID;
-    VideosAdapter adapter;
+
+
 
 
     @Override
@@ -175,6 +180,15 @@ public class FetchVideosTask extends AsyncTask<String, Void, Void> {
     /** TODO: Uncoment if need to check insertion into DB  */
     @Override
     protected void onPostExecute(Void aVoid) {
+
+        Cursor cursor = mContext.getContentResolver().query(
+                MoviesContract.VideosEntry.buildVideosUriWithID(Long.parseLong(dBmovieID)),
+                null,
+                null,
+                null,
+                null);
+        mAdapter.swapCursor(cursor);
+
         super.onPostExecute(aVoid);
 /**        final Cursor cursor = mContext.getContentResolver().query(
                 //MoviesContract.VideosEntry.CONTENT_URI,
