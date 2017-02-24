@@ -3,4 +3,6 @@
     <color name="green">#009688</color>
     <color name="white">#ffffff</color>
     <color name="grey">#757677</color>
+    <color name="action_bar">#212121</color>
+    <color name="black">#000000</color>
 </resources>

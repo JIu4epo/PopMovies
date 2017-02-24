@@ -21,6 +21,12 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+/*        File dirFiles = getFilesDir();
+        for (String strFile : dirFiles.list())
+        {
+            Log.v(LOG_TAG, "Direcroty file - "+strFile);
+        }*/
+
         setContentView(R.layout.activity_main);
 
         if (findViewById(R.id.movie_detail_container) != null){
@@ -34,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
             }
         } else {
             mTwoPane = false;
-            Log.v(LOG_TAG, "ONE PANE MODE");
+            //Log.v(LOG_TAG, "ONE PANE MODE");
 
         }
 /*        MainActivityFragment mainActivityFragment = ((MainActivityFragment) getSupportFragmentManager()
@@ -66,6 +72,8 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
             Utility.clearTable(this, MoviesContract.MoviesEntry.buildMoviesUri());
         } else if (id == R.id.drop_db){
             Utility.dropDB(this);
+        } else if (id == R.id.clear_but_favorites){
+            Utility.clearButFavorites(this);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -79,6 +87,8 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
 
     @Override
     public void onItemSelected(Uri uri, String mdbID) {
+        Log.v(LOG_TAG, "onItemSelected");
+
         if (mTwoPane){
             Log.v(LOG_TAG, "mTwoPane - "+mTwoPane);
             Bundle args = new Bundle();

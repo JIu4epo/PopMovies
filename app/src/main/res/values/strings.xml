@@ -34,4 +34,6 @@
     <string name="fav_default">false</string>
     <string name="listview_trailers_title">Trailers:</string>
     <string name="listview_reviews_title">Reviews:</string>
+    <string name="sync_account_type">popmovies.mycompany.com</string>
+    <string name="content_authority">com.mycompany.popmovies</string>
 </resources>

@@ -1,12 +1,22 @@
-package com.mycompany.popmovies;
+package com.mycompany.popmovies.sync;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.content.AbstractThreadedSyncAdapter;
+import android.content.ContentProviderClient;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SyncRequest;
+import android.content.SyncResult;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
 
+import com.mycompany.popmovies.R;
+import com.mycompany.popmovies.Utility;
 import com.mycompany.popmovies.data.MoviesContract;
 
 import org.json.JSONArray;
@@ -21,37 +31,34 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Vector;
 
-/**
- *  Class for connecting to TMDB API, fetching JSON string, writing information into DB
- */
 
-public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
 
-    private final String LOG_TAG = FetchMovieInfoTask.class.getSimpleName();
-    private final Context mContext;
+public class PopMoviesSyncAdapter extends AbstractThreadedSyncAdapter {
+String LOG_TAG = PopMoviesSyncAdapter.class.getSimpleName();
 
-    FetchMovieInfoTask(Context context){
-        mContext = context;
+    public static final int SYNC_INTERVAL = 60 * 60 * 24; //Sync one a day
+    public static final int SYNC_FLEXTIME = SYNC_INTERVAL / 3;
+
+    public PopMoviesSyncAdapter(Context context, boolean autoInitialize) {
+        super(context, autoInitialize);
     }
 
     @Override
-    protected Void doInBackground(String... params){
-        if (params.length == 0){
-            return null;
-        }
-
+    public void onPerformSync(Account account, Bundle bundle, String s, ContentProviderClient contentProviderClient, SyncResult syncResult) {
+        //Log.v("onPerformSync","syncing");
         HttpURLConnection urlCOnnection = null;
         BufferedReader reader = null;
+        String sortMethod = Utility.apiSortMethod(getContext());
 
         String movieInfoJsonStr = null;
-        String apiKey = "fa2461a57ac80bd28b2dc05dcb78f1e6"; //delete API key when sharing
+        String apiKey = Utility.getApiKey(); //delete API key when sharing
 
         try {
             final String MOVIEINFO_BASE_URL = "http://api.themoviedb.org/3/discover/movie?";
             final String MOVIEINFO_SORT = "sort_by";
             final String MOVIEINFO_APIKEY = "api_key";
             Uri builtUri = Uri.parse(MOVIEINFO_BASE_URL).buildUpon().
-                    appendQueryParameter(MOVIEINFO_SORT, params[0]).
+                    appendQueryParameter(MOVIEINFO_SORT, sortMethod).
                     appendQueryParameter(MOVIEINFO_APIKEY, apiKey).build();
             URL url = new URL(builtUri.toString());
             urlCOnnection = (HttpURLConnection) url.openConnection();
@@ -61,7 +68,7 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
             InputStream inputStream = urlCOnnection.getInputStream();
             StringBuffer buffer = new StringBuffer();
             if (inputStream == null){
-                return null;
+                return;
             }
 
             reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -73,7 +80,7 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
             }
 
             if (buffer.length() == 0){
-                return null;
+                return;
             }
 
             movieInfoJsonStr = buffer.toString();
@@ -98,10 +105,8 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
         }
 
 
-        return null;
+        return;
     }
-
-
 
     private void getMovieInfoDataFromJason (String movieInfoJsonStr) throws JSONException {
         final String TMDB_RESULTS = "results";
@@ -121,12 +126,11 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
             Vector<ContentValues> cVVector = new Vector<>(movieDataArray.length());
 
             /*Clear table of "un-favorites" before inserting new batch*/
-            Utility.clearButFavorites(mContext);
+            Utility.clearButFavorites(getContext());
 
             /*Check if DB is not empty. If not empty - there are Favs*/
-            Cursor cursor = mContext.getContentResolver().query(MoviesContract.MoviesEntry.buildMoviesUri(),
+            Cursor cursor = getContext().getContentResolver().query(MoviesContract.MoviesEntry.buildMoviesUri(),
                     new String[]{MoviesContract.MoviesEntry.COLUMN_MDB_ID, MoviesContract.MoviesEntry._ID}, null, null, null);
-
 
             for (int i =0; i<movieDataArray.length(); i++){
 
@@ -145,48 +149,31 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
                 moviesValues.put(MoviesContract.MoviesEntry.COLUMN_RUNTIME, 0);
 
                 boolean isInDB = false;
-                    while (cursor.moveToNext()) {
-                        if (movieInfo.getString(TMDB_ID).equals(cursor.getString(0))){
-                            isInDB = true;
-                            break;
+                while (cursor.moveToNext()) {
+                    if (movieInfo.getString(TMDB_ID).equals(cursor.getString(0))){
+                        isInDB = true;
+                        break;
 
-                        }
                     }
+                }
                 if (!isInDB){
                     /*Movie is not in DB, lets add it*/
-                    mContext.getContentResolver().insert(MoviesContract.MoviesEntry.CONTENT_URI, moviesValues);
+                    getContext().getContentResolver().insert(MoviesContract.MoviesEntry.CONTENT_URI, moviesValues);
                 } else {
                     /*Movie is in DB, lets update it's rating and popularity*/
                     ContentValues values = new ContentValues();
                     values.put(MoviesContract.MoviesEntry.COLUMN_POPULARITY, movieInfo.getString(TMDB_POPULARITY));
                     values.put(MoviesContract.MoviesEntry.COLUMN_VOTE_AVERAGE, movieInfo.getString(TMDB_RAITING));
 
-                    mContext.getContentResolver().update(
+                    getContext().getContentResolver().update(
                             MoviesContract.MoviesEntry.buildMoviesUriWithID(Long.parseLong(cursor.getString(1))),
                             values,
                             null,
                             null
                     );
-
-
                 }
-
                 cursor.moveToPosition(-1);
-
-                //cVVector.add(moviesValues);
             }
-
-
-            // add to database
-/*            if ( cVVector.size() > 0 ) {
-                ContentValues[] cvArray = new ContentValues[cVVector.size()];
-                cVVector.toArray(cvArray);
-                if (!cursor.moveToFirst()) {
-                    Log.v(LOG_TAG, "No cursor");
-                    mContext.getContentResolver().bulkInsert(MoviesContract.MoviesEntry.CONTENT_URI, cvArray);
-                }
-            }*/
-
             cursor.close();
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
@@ -194,17 +181,51 @@ public class FetchMovieInfoTask extends AsyncTask<String, Void, Void> {
         }
     }
 
+    /*Helper methods*/
+    public static Account getSyncAccount(Context context) {
+        // Get an instance of the Android account manager
+        AccountManager accountManager =
+                (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
 
+        // Create the account type and default account
+        Account newAccount = new Account(
+                context.getString(R.string.app_name), context.getString(R.string.sync_account_type));
 
-
-
-    @Override
-    protected void onPostExecute(Void aVoid) {
-        super.onPostExecute(aVoid);
+        // If the password doesn't exist, the account doesn't exist
+        if ( null == accountManager.getPassword(newAccount) ) {
+            if (!accountManager.addAccountExplicitly(newAccount, "", null)) {
+                return null;
+            }
+            onAccountCreated(newAccount, context);
+        }
+        return newAccount;
     }
 
+    private static void onAccountCreated(Account newAccount, Context context){
+        PopMoviesSyncAdapter.configurePeriodicSync(context, SYNC_INTERVAL, SYNC_FLEXTIME);
+        ContentResolver.setSyncAutomatically(newAccount, context.getString(R.string.content_authority), true);
+        syncImmediately(context);
+    }
 
+    public static void configurePeriodicSync(Context context, int syncInterval, int flexTime){
+        Account account = getSyncAccount(context);
+        String authority = context.getString(R.string.content_authority);
+        if  (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            SyncRequest request = new SyncRequest.Builder().
+                    syncPeriodic(syncInterval, flexTime).
+                    setSyncAdapter(account, authority).
+                    setExtras(new Bundle()).build();
+            ContentResolver.requestSync(request);
+        } else  {
+            ContentResolver.addPeriodicSync(account,authority, new Bundle(),syncInterval);
+        }
+    }
 
-
-
+    public static void syncImmediately(Context context) {
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        ContentResolver.requestSync(getSyncAccount(context),
+                context.getString(R.string.content_authority), bundle);
+    }
 }

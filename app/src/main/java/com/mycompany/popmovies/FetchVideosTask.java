@@ -53,7 +53,7 @@ public class FetchVideosTask extends AsyncTask<String, Void, Void> {
         BufferedReader reader = null;
 
         String videosInfoJsonStr = null;
-        String apiKey = "fa2461a57ac80bd28b2dc05dcb78f1e6"; //delete API key when sharing
+        String apiKey = Utility.getApiKey(); //delete API key when sharing
 
         try {
             final String VIDEOS_BASE_URL = "http://api.themoviedb.org/3/movie/"+params[0]+"/videos";
@@ -192,11 +192,11 @@ public class FetchVideosTask extends AsyncTask<String, Void, Void> {
         super.onPostExecute(aVoid);
 /**        final Cursor cursor = mContext.getContentResolver().query(
                 //MoviesContract.VideosEntry.CONTENT_URI,
-                MoviesContract.VideosEntry.buildVideosUriWithID(Long.parseLong(dBmovieID)),
+                MoviesContract.VideosEntry.buildVideosUriWithID(Long.parseLong(dBMovieID)),
                 null,
                 //new String[]{MoviesContract.VideosEntry.COLUMN_TRAILER_PATH},
                 null,
-                //new String[]{dBmovieID},
+                //new String[]{dBMovieID},
                 null,
                 null);
         String[] items = new String[cursor.getCount()];

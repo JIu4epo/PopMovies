@@ -14,5 +14,6 @@
         />
     <item android:id="@+id/drop_db"
         android:title="Drop DB"/>
-
+    <item android:id="@+id/clear_but_favorites"
+        android:title="Clear tablebut Favorites"/>
 </menu>

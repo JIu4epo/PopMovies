@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
@@ -40,6 +42,11 @@ public class Utility {
         }
     }
 
+    public static String apiSortMethod(Context context){
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getString(context.getString(R.string.sort_key),context.getString(R.string.sort_default));
+    }
+
     public static String showFavs(Context context){
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String showFavs = String.valueOf(prefs.getBoolean(context.getString(R.string.fav_key), false));
@@ -56,6 +63,11 @@ public class Utility {
         //MoviesContract.MoviesEntry.buildMoviesUri()
     }
 
+    public static void clearButFavorites(Context context){
+        final String sMovieWithFav =
+                MoviesContract.MoviesEntry.TABLE_NAME+ "." + MoviesContract.MoviesEntry.COLUMN_FAV_MOVIE + " = ? ";
+        context.getContentResolver().delete(MoviesContract.MoviesEntry.buildMoviesUri(), sMovieWithFav, new String[]{"false"});
+    }
 
 
     public static void dropDB(Context context){
@@ -73,8 +85,6 @@ public class Utility {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        //Log.v("Utility", "File Name - "+ url);
-                        //Log.v("Utility", "File Path - "+ context.getFilesDir());
 
                         File file = new File(context.getFilesDir(), url);
                         try {
@@ -123,7 +133,17 @@ public class Utility {
         return string.substring(0,4);
     }
 
+    public static boolean isNetworkAvailable(Context context) {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
 
+    public static String getApiKey(){
+        return "fa2461a57ac80bd28b2dc05dcb78f1e6"; //delete API key when sharing
+
+    }
 }
 
 

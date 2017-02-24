@@ -21,9 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Vector;
 
-/**
- * Created by Borys on 2016-12-22.
- */
+
 
 public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
 
@@ -49,11 +47,10 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
         BufferedReader reader = null;
 
         String reviewsInfoJsonStr = null;
-        String apiKey = "fa2461a57ac80bd28b2dc05dcb78f1e6"; //delete API key when sharing
+        String apiKey = Utility.getApiKey();
 
         try {
             final String REVIEWS_BASE_URL = "http://api.themoviedb.org/3/movie/"+params[0]+"/reviews";
-            //Log.v(LOG_TAG, REVIEWS_BASE_URL);
             final String REVIEWS_APIKEY = "api_key";
             Uri builtUri = Uri.parse(REVIEWS_BASE_URL).buildUpon().
                     appendQueryParameter(REVIEWS_APIKEY, apiKey).build();
@@ -61,7 +58,6 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
             urlCOnnection = (HttpURLConnection) url.openConnection();
             urlCOnnection.setRequestMethod("GET");
             urlCOnnection.connect();
-            Log.v(LOG_TAG, "URI - "+String .valueOf(url));
 
             InputStream inputStream = urlCOnnection.getInputStream();
             StringBuffer buffer = new StringBuffer();

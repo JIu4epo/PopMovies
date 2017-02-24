@@ -32,25 +32,20 @@ public class GridAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ImageView imageView = (ImageView) view;
-        Picasso.with(context).setIndicatorsEnabled(true);
+        //Picasso.with(context).setIndicatorsEnabled(true);
 
-        String imageBaseUrl = "http://image.tmdb.org/t/p/w342/";
-        String imageName = cursor.getString(MainActivityFragment.COL_MOVIE_POSTER_PATH).replace(imageBaseUrl, "");
-        String imageUrl = cursor.getString(MainActivityFragment.COL_MOVIE_POSTER_PATH);
+            String imageBaseUrl = "http://image.tmdb.org/t/p/w342/";
+            String imageName = cursor.getString(MainActivityFragment.COL_MOVIE_POSTER_PATH).replace(imageBaseUrl, "");
+            String imageUrl = cursor.getString(MainActivityFragment.COL_MOVIE_POSTER_PATH);
 
-        File img = new File(context.getFilesDir() + "/" +imageName);
+            File img = new File(context.getFilesDir() + "/" +imageName);
+            if (!img.exists()){
+                Utility.imageDownload(context, imageUrl , imageName);
+                Picasso.with(context).load(cursor.getString(MainActivityFragment.COL_MOVIE_POSTER_PATH)).into(imageView);
+            } else {
+                Picasso.with(context).load(img).into(imageView);
+            }
 
-//        Log.v("GridAdapter", "img - "+img);
-//        Log.v("GridAdapter", "imgUrl - "+imageUrl);
-//        Log.v("GridAdapter", "imgName - "+imageName);
 
-        if (!img.exists()){
-            Utility.imageDownload(context, imageUrl , imageName);
-            Picasso.with(context).load(cursor.getString(MainActivityFragment.COL_MOVIE_POSTER_PATH)).into(imageView);
-        } else {
-            Picasso.with(context).load(img).into(imageView);
-        }
-
-        //Picasso.with(context).load(cursor.getString(MainActivityFragment.COL_MOVIE_POSTER_PATH)).into(imageView);
     }
 }

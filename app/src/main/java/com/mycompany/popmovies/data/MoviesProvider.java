@@ -62,6 +62,8 @@ public class MoviesProvider extends ContentProvider {
     private static final String sMovieWithID =
             MoviesEntry.TABLE_NAME+ "." + MoviesEntry._ID + " = ? ";
 
+
+
     private static final String sMovieWithFav =
             MoviesEntry.TABLE_NAME+ "." + MoviesEntry.COLUMN_FAV_MOVIE + " = ? ";
 

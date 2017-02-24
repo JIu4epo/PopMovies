@@ -1,10 +1,8 @@
 package com.mycompany.popmovies;
 
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -22,6 +20,7 @@ import android.widget.GridView;
 import android.widget.Toast;
 
 import com.mycompany.popmovies.data.MoviesContract;
+import com.mycompany.popmovies.sync.PopMoviesSyncAdapter;
 
 import static com.mycompany.popmovies.Utility.verifyStoragePermissions;
 
@@ -67,9 +66,10 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
+        Log.v(LOG_TAG, "onCreateView");
         mGridAdapter = new GridAdapter(null, getActivity(), 0);
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
         mGridView = (GridView) rootView.findViewById(R.id.gridview_movie);
         mGridView.setAdapter(mGridAdapter);
 
@@ -79,17 +79,23 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
                 Cursor cursor = (Cursor) parent.getItemAtPosition(position);
 
                 if (cursor != null){
-/*                    Intent intent = new Intent(getActivity(), DetailActivity.class)
-                            .setData(MoviesContract.MoviesEntry.buildMoviesUriWithID(id))
-                            .putExtra("mdbID", cursor.getString(COL_MOVIE_MDB_ID));
-                    startActivity(intent);*/
                     ((Callback) getActivity()).onItemSelected(MoviesContract.MoviesEntry.buildMoviesUriWithID(id), cursor.getString(COL_MOVIE_MDB_ID));
                 }
                 mPosition = position;
+                //Log.v(LOG_TAG, "mPosition at onClick - "+mPosition);
             }
         });
         if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)){
             mPosition = savedInstanceState.getInt(SELECTED_KEY);
+            //Log.v(LOG_TAG, "mPosition recorded in savedInstanceState - "+mPosition);
+
+        } else {
+            //Log.v(LOG_TAG, "Else? ");
+            //Log.v(LOG_TAG, "savedInstanceState - "+String.valueOf(savedInstanceState));
+            //Log.v(LOG_TAG, "savedInstanceState.containsKey(SELECTED_KEY) - "+savedInstanceState.containsKey(SELECTED_KEY));
+
+
+
         }
 
         return rootView;
@@ -98,6 +104,11 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
+        Log.v(LOG_TAG, "onCreate");
+
+        Log.v(LOG_TAG, "onCreate, savedInstanceState - "+savedInstanceState);
+
+
         setHasOptionsMenu(true);
     }
 
@@ -107,22 +118,34 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     }
 
 
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
+        int id = item.getItemId();
+        if (id == R.id.refresh){
+            //getDataFromAPI();
+            PopMoviesSyncAdapter.syncImmediately(getActivity());
+        }
         return super.onOptionsItemSelected(item);
+
     }
 
     private void getDataFromAPI(){
-        FetchMovieInfoTask movieInfoTask = new FetchMovieInfoTask(getContext());
+        Log.v(LOG_TAG, "getDataFromAPI");
+        //Log.v(LOG_TAG, "sort method - "+Utility.apiSortMethod(getActivity()));
+/*        FetchMovieInfoTask movieInfoTask = new FetchMovieInfoTask(getContext());
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String sortMethod = prefs.getString(getString(R.string.sort_key),getString(R.string.sort_default));
-        movieInfoTask.execute(sortMethod);
+        movieInfoTask.execute(sortMethod);*/
+        PopMoviesSyncAdapter.syncImmediately(getActivity());
+
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        Log.v(LOG_TAG, "onResume" );
 //        Log.v("Storage", String.valueOf(
 //                Environment.getExternalStorageDirectory().getParent()) + "\n" +
 //                Environment.getExternalStorageDirectory().getPath() + "\n" +
@@ -151,7 +174,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
                 null,
                 selection,
                 selectionArgs,
-                Utility.sortMethod(getActivity()));
+                Utility.sortMethod(getActivity()) + " LIMIT 20");
 
         try {
             if (!cursor.moveToFirst() && Utility.showFavs(getActivity()).equals("false")){
@@ -160,7 +183,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             } else if (!cursor.moveToFirst() && Utility.showFavs(getActivity()).equals("true")){
                 Toast.makeText(getActivity(),"You don't have favourite movies", Toast.LENGTH_SHORT).show();
             } else {
-                Log.v("onResume","Table is not empty");
+                //Log.v("onResume","Table is not empty");
             }
         } catch (NullPointerException e){
             Log.e("MainActivityFragment", "ERROR", e );
@@ -170,6 +193,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onStart(){
+        Log.v(LOG_TAG, "onStart");
         super.onStart();
         verifyStoragePermissions(getActivity());
         //File intSorage = getActivity().getFilesDir();
@@ -204,10 +228,25 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+
+/*        if (cursor.getCount()%2 == 1){
+            *//*If uneven number of posters(number of favourites can be uneven), add placeholder *//*
+            //TODO:Make sure placeholder is not clickable
+            Log.v(LOG_TAG, "Cursor is uneven");
+            MatrixCursor placeholderRow = new MatrixCursor(MOVIE_COLUMNS);
+            placeholderRow.addRow(new String[]{,null, "placeholder",null,null,null,null, null, null});
+            Cursor[] cursors = {placeholderRow,cursor};
+            cursor = new MergeCursor(cursors);
+        }*/
+
         mGridAdapter.swapCursor(cursor);
 
         if (mPosition != GridView.INVALID_POSITION){
+            //Log.v(LOG_TAG, "mPosition != GridView.INVALID_POSITION");
+
             mGridView.smoothScrollToPosition(mPosition);
+        } else {
+            //Log.v(LOG_TAG, "mPosition - "+mPosition+", GridView.INVALID_POSITION - "+GridView.INVALID_POSITION);
         }
     }
 
@@ -218,7 +257,9 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        Log.v(LOG_TAG, "onActivityCreated");
         getLoaderManager().initLoader(MOVIE_LOADER, null, this);
+        //Log.v(LOG_TAG, "onActivityCreated, savedInstanceState - "+savedInstanceState);
         super.onActivityCreated(savedInstanceState);
 
     }
@@ -244,11 +285,17 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
+        Log.v(LOG_TAG, "onSaveInstanceState");
+
         if (mPosition != GridView.INVALID_POSITION){
             outState.putInt(SELECTED_KEY, mPosition);
+            //Log.v(LOG_TAG, "mPosition at onSaveInstanceState - "+outState.getInt(SELECTED_KEY));
         }
+
         super.onSaveInstanceState(outState);
     }
+
+
 
     public interface Callback {
         public void onItemSelected(Uri uri, String mdbID);

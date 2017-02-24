@@ -27,7 +27,7 @@ import java.net.URL;
  * Created by Borys on 2016-12-02.
  */
 
-public class FetchMoreMovieInfoTask extends AsyncTask<String, Void, Void> {
+public class FetchMoreMovieInfoTask extends AsyncTask<String, Integer, Void> {
 
     private final String LOG_TAG = FetchMoreMovieInfoTask.class.getSimpleName();
     private final Context mContext;
@@ -48,7 +48,7 @@ public class FetchMoreMovieInfoTask extends AsyncTask<String, Void, Void> {
         BufferedReader reader = null;
 
         String movieInfoJsonStr = null;
-        String apiKey = "fa2461a57ac80bd28b2dc05dcb78f1e6"; //delete API key when sharing
+        String apiKey = Utility.getApiKey(); //delete API key when sharing
 
         try {
             final String MOVIE_BASE_URL = "http://api.themoviedb.org/3/movie/"+params[0];
@@ -133,4 +133,9 @@ public class FetchMoreMovieInfoTask extends AsyncTask<String, Void, Void> {
         }
     }
 
+    @Override
+    protected void onProgressUpdate(Integer... values) {
+        super.onProgressUpdate(values);
+        Log.v(LOG_TAG, "Progress - "+values[0]);
+    }
 }

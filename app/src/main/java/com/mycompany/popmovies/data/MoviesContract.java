@@ -101,6 +101,10 @@ public class MoviesContract {
             return CONTENT_URI;
         }
 
+/*        public static Uri buildMoviesUriWithLimit(){
+            return
+        }*/
+
         public static String getIDFromURI(Uri uri){
             return String.valueOf(uri.getPathSegments().get(1));
         }
