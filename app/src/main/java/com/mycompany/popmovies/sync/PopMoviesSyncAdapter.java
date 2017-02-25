@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Vector;
 
 
 
@@ -37,6 +36,8 @@ public class PopMoviesSyncAdapter extends AbstractThreadedSyncAdapter {
 String LOG_TAG = PopMoviesSyncAdapter.class.getSimpleName();
 
     public static final int SYNC_INTERVAL = 60 * 60 * 24; //Sync one a day
+    //public static final int SYNC_INTERVAL = 60 * 3; //Sync every 3 mins
+
     public static final int SYNC_FLEXTIME = SYNC_INTERVAL / 3;
 
     public PopMoviesSyncAdapter(Context context, boolean autoInitialize) {
@@ -45,7 +46,7 @@ String LOG_TAG = PopMoviesSyncAdapter.class.getSimpleName();
 
     @Override
     public void onPerformSync(Account account, Bundle bundle, String s, ContentProviderClient contentProviderClient, SyncResult syncResult) {
-        //Log.v("onPerformSync","syncing");
+        Log.v(LOG_TAG,"syncing");
         HttpURLConnection urlCOnnection = null;
         BufferedReader reader = null;
         String sortMethod = Utility.apiSortMethod(getContext());
@@ -122,8 +123,6 @@ String LOG_TAG = PopMoviesSyncAdapter.class.getSimpleName();
         try {
             JSONObject movieDataJason = new JSONObject(movieInfoJsonStr);
             JSONArray movieDataArray = movieDataJason.getJSONArray(TMDB_RESULTS);
-
-            Vector<ContentValues> cVVector = new Vector<>(movieDataArray.length());
 
             /*Clear table of "un-favorites" before inserting new batch*/
             Utility.clearButFavorites(getContext());

@@ -107,7 +107,7 @@ xmlns:android="http://schemas.android.com/apk/res/android"
             android:background="@color/grey" />
 
 
-        <TextView
+<!--        <TextView
 
             android:id="@+id/trailer_title"
             android:layout_width="wrap_content"
@@ -154,6 +154,66 @@ xmlns:android="http://schemas.android.com/apk/res/android"
 
             android:paddingLeft="@dimen/detail_margin_left"
 
-            android:nestedScrollingEnabled="true" />
+            android:nestedScrollingEnabled="true" />-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/trailer_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:clickable="true"
+                    android:layout_marginLeft="@dimen/detail_margin_left"
+                    android:layout_marginRight="@dimen/detail_margin_left"
+                    android:text="@string/listview_trailers_title" />
+
+                <ListView
+                    android:id="@+id/listview_trailers"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:divider="#CCC"
+                    android:dividerHeight="1dp"
+                    android:layout_marginLeft="@dimen/detail_margin_left"
+                    android:layout_marginRight="@dimen/detail_margin_left"
+                    android:paddingLeft="@dimen/detail_margin_left"
+                    />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/reviews_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginLeft="@dimen/detail_margin_left"
+                    android:layout_marginRight="@dimen/detail_margin_left"
+                    android:text="@string/listview_reviews_title" />
+
+                <ListView
+                    android:id="@+id/listview_reviews"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/detail_margin_left"
+                    android:layout_marginRight="@dimen/detail_margin_left"
+                    android:paddingLeft="@dimen/detail_margin_left"
+                    />
+
+            </LinearLayout>
+
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

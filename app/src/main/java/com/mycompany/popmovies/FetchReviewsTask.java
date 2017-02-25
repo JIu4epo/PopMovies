@@ -19,21 +19,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Vector;
-
 
 
 public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
 
     private final String LOG_TAG = FetchReviewsTask.class.getSimpleName();
     private final Context mContext;
-    ReviewsAdapter mAdapter;
+    private ReviewsAdapter mAdapter;
 
     FetchReviewsTask(Context context, ReviewsAdapter adapter){
         mContext = context;
         mAdapter = adapter;
     }
-    String dBmovieID;
+    private String dBmovieID;
 
 
     @Override
@@ -46,7 +44,7 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
         HttpURLConnection urlCOnnection = null;
         BufferedReader reader = null;
 
-        String reviewsInfoJsonStr = null;
+        String reviewsInfoJsonStr;
         String apiKey = Utility.getApiKey();
 
         try {
@@ -60,7 +58,8 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
             urlCOnnection.connect();
 
             InputStream inputStream = urlCOnnection.getInputStream();
-            StringBuffer buffer = new StringBuffer();
+            //StringBuffer buffer = new StringBuffer();
+            StringBuilder buffer = new StringBuilder();
             if (inputStream == null){
                 return null;
             }
@@ -112,7 +111,12 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
             JSONObject reviewsDataJason = new JSONObject(reviewsInfoJsonStr);
             JSONArray reviewsDataArray = reviewsDataJason.getJSONArray(TMDB_RESULTS);
 
-            Vector<ContentValues> cVVector = new Vector<>(reviewsDataArray.length());
+            Cursor cursor = mContext.getContentResolver().query(
+                    MoviesContract.ReviewsEntry.buildReviewsUri(),
+                    new String[]{MoviesContract.ReviewsEntry.COLUMN_MDB_ID, MoviesContract.ReviewsEntry._ID},
+                    null,
+                    null,
+                    null);
 
             for (int i =0; i<reviewsDataArray.length(); i++){
 
@@ -126,41 +130,25 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
                 reviewValues.put(MoviesContract.ReviewsEntry.COLUMN_URL, reviewInfo.getString(TMDB_URL));
                 reviewValues.put(MoviesContract.ReviewsEntry.COLUMN_MOVIE_KEY, dBmovieID );
 
-                cVVector.add(reviewValues);
+                boolean isInDB = false;
+
+                if (cursor != null) {
+                    while (cursor.moveToNext()) {
+                        if (reviewInfo.getString(TMDB_ID).equals(cursor.getString(0))) {
+                            isInDB = true;
+                            break;
+                        }
+                    }
+
+                    if (!isInDB) {
+                        mContext.getContentResolver().insert(MoviesContract.ReviewsEntry.CONTENT_URI, reviewValues);
+                    }
+                    cursor.moveToPosition(-1);
+                }
             }
 
-            // add to database
-            if ( cVVector.size() > 0 ) {
-                ContentValues[] cvArray = new ContentValues[cVVector.size()];
-                cVVector.toArray(cvArray);
-                mContext.getContentResolver().bulkInsert(MoviesContract.ReviewsEntry.CONTENT_URI, cvArray);
-            }
+            if (cursor != null) cursor.close();
 
-/**
- *   TODO: Uncomment to check if insert is successful
- *
- *
- */
-            /***********************************/
-/*            Cursor cur = mContext.getContentResolver().query(MoviesContract.ReviewsEntry.CONTENT_URI,
-                    null, null, null, null);
-            cVVector = new Vector<ContentValues>(cur.getCount());
-            if ( cur.moveToFirst() ) {
-                do {
-                    ContentValues cv = new ContentValues();
-                    DatabaseUtils.cursorRowToContentValues(cur, cv);
-                    cVVector.add(cv);
-                } while (cur.moveToNext());
-            }
-            Log.v(LOG_TAG, "FetchReviewsTask Complete. " + cVVector.size() + " Inserted");
-            String[] resultStrs = convertContentValuesToUXFormat(cVVector);
-            if (resultStrs.length > 1 ) {
-                Log.v("Result", resultStrs[0] + " :: " + resultStrs[1]);
-            } else {
-                Log.v("Result", "The only entry ::"+ resultStrs[0]);
-            }*/
-
-            /***********************************/
 
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
@@ -168,7 +156,6 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
         }
     }
 
-    /** TODO: Uncoment if need to check insertion into DB  */
     @Override
     protected void onPostExecute(Void aVoid) {
         Cursor cursor = mContext.getContentResolver().query(
@@ -177,21 +164,11 @@ public class FetchReviewsTask extends AsyncTask<String, Void, Void> {
                 null,
                 null,
                 null);
-        mAdapter.swapCursor(cursor);
+        if (cursor != null) {
+            mAdapter.swapCursor(cursor);
+            cursor.close();
+        }
         super.onPostExecute(aVoid);
     }
 
-    /**************************/
-    String[] convertContentValuesToUXFormat(Vector<ContentValues> cvv) {
-        // return strings to keep UI functional for now
-        String[] resultStrs = new String[cvv.size()];
-        for ( int i = 0; i < cvv.size(); i++ ) {
-            ContentValues reviewsValues = cvv.elementAt(i);
-
-            resultStrs[i] = reviewsValues.getAsString(MoviesContract.VideosEntry.COLUMN_MOVIE_KEY) +
-                    " - " + reviewsValues.getAsString(MoviesContract.VideosEntry.COLUMN_TRAILER_PATH);
-        }
-        return resultStrs;
-    }
-    /**************************/
 }

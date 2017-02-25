@@ -162,7 +162,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                     }
                 }
 
-
+                getActivity().setTitle(data.getString(COL_MOVIE_NAME));
                 tvTitle.setText(data.getString(COL_MOVIE_NAME));
                 rating = data.getString(COL_MOVIE_VOTE_AVERAGE) + "/10";
                 tvRating.setText(rating);
@@ -315,12 +315,9 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        //Log.v(LOG_TAG, "onActivityCreated");
         super.onActivityCreated(savedInstanceState);
-
         Intent intent = getActivity().getIntent();
         if (intent.getData() == null && getArguments() == null){
-            //Log.v(LOG_TAG, "No intent and no arguments");
 
             Cursor cursor = getActivity()
                     .getContentResolver()
@@ -333,7 +330,6 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
                     );
             if (cursor == null || !cursor.moveToFirst()){
-                //Log.v(LOG_TAG, "No cursor OR no moveToFirst");
                 //TODO: Put placeholder layout here because no data in DB
                 return;
             } else {
@@ -341,47 +337,20 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                 dBMovieID = "1";
                 mUri = Uri.parse("content://com.mycompany.popmovies/movies/"+ dBMovieID);
                 cursor.close();
-                //Log.v(LOG_TAG, "dBMovieID - " + dBMovieID + ", mDBmovieID - " + mDBmovieID + ", mUri - " + mUri);
             }
-/*            mUri = Uri.parse("content://com.mycompany.popmovies/movies/1");
-            dBMovieID = String.valueOf(MoviesContract.VideosEntry.getIDFromURI(mUri));
-
-            Cursor cursor        = getActivity()
-                    .getContentResolver()
-                    .query(
-                            MoviesContract.MoviesEntry.buildMoviesUriWithID(Long.parseLong(dBMovieID)),
-                            MOVIE_COLUMNS,
-                            null,
-                            null,
-                            null
-
-                            );
-            if (cursor !=null && cursor.moveToFirst())
-            mDBmovieID = cursor.getString(COL_MOVIE_MDB_ID);
-            cursor.close();
-
-            Log.v(LOG_TAG, "mUri - " + mUri + ", mDBmovieID - " + mDBmovieID);*/
-            //return;
         } else {
-            //Log.v(LOG_TAG, "else");
             if (intent == null || intent.getData() == null) {
                 Bundle arguments = getArguments();
                 if (arguments != null) {
                     mUri = arguments.getParcelable(DETAIL_URI);
                     mDBmovieID = arguments.getString("mdbID");
                     dBMovieID = String.valueOf(MoviesContract.VideosEntry.getIDFromURI(mUri));
-                    //Log.v(LOG_TAG, "mUri - " + mUri + ", mDBmovieID - " + mDBmovieID);
                 }
-
-
             } else {
                 mUri = intent.getData();
                 mDBmovieID = intent.getStringExtra("mdbID");
                 dBMovieID = String.valueOf(MoviesContract.VideosEntry.getIDFromURI(mUri));
             }
-
-
-
         }
         getLoaderManager().initLoader(MOVIE_LOADER, null, this);
         getLoaderManager().initLoader(VIDEO_LOADER, null, this);
@@ -399,8 +368,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                              Bundle savedInstanceState) {
         Intent intent = getActivity().getIntent();
         if (intent.getData() == null && getArguments() == null) {
-            //Log.v(LOG_TAG, "No intent and no arguments");
-
+            //No intent and no arguments
             Cursor cursor = getActivity()
                     .getContentResolver()
                     .query(
@@ -412,17 +380,15 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
                     );
             if (cursor == null || !cursor.moveToFirst()) {
-                //Log.v(LOG_TAG, "No cursor OR no moveToFirst");
-                //TODO: Put placeholder layout here because no data in DB
+                //No cursor OR no moveToFirst
                 return inflater.inflate(R.layout.fragment_detail_placeholder, container, false);
             } else {
-
+                cursor.close();
             }
         }
 
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         setHasOptionsMenu(true);
-        //Log.v(LOG_TAG, "onCreateView");
 
         tvTitle = (TextView) rootView.findViewById(R.id.movie_title);
         tvDate = (TextView) rootView.findViewById(R.id.movie_date);

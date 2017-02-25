@@ -18,14 +18,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-/**
- * Created by Borys on 2017-01-10.
- */
 
-
-/**
- * Created by Borys on 2016-12-02.
- */
 
 public class FetchMoreMovieInfoTask extends AsyncTask<String, Integer, Void> {
 
@@ -39,6 +32,8 @@ public class FetchMoreMovieInfoTask extends AsyncTask<String, Integer, Void> {
 
     @Override
     protected Void doInBackground(String... params){
+
+        Log.v(LOG_TAG, "doInBackground");
         if (params.length == 0){
             return null;
         }
@@ -83,10 +78,6 @@ public class FetchMoreMovieInfoTask extends AsyncTask<String, Integer, Void> {
             getMovieInfoDataFromJason(movieInfoJsonStr);
 
 
-            /** */
-
-            /***/
-
         } catch (IOException e) {
             Log.e(LOG_TAG, "Error ", e);
         } catch (JSONException e){
@@ -111,9 +102,7 @@ public class FetchMoreMovieInfoTask extends AsyncTask<String, Integer, Void> {
         final String TMDB_RUNTIME = "runtime";
         try {
             JSONObject movieDataJason = new JSONObject(videosInfoJsonStr);
-            //Log.v(LOG_TAG, String.valueOf(movieDataJason));
             String runtime = movieDataJason.getString(TMDB_RUNTIME);
-            //Log.v(LOG_TAG, String.valueOf(runtime));
 
             final ContentValues movieValue = new ContentValues();
             movieValue.put(MoviesContract.MoviesEntry.COLUMN_RUNTIME, runtime);
@@ -135,7 +124,7 @@ public class FetchMoreMovieInfoTask extends AsyncTask<String, Integer, Void> {
 
     @Override
     protected void onProgressUpdate(Integer... values) {
-        super.onProgressUpdate(values);
         Log.v(LOG_TAG, "Progress - "+values[0]);
+        super.onProgressUpdate(values);
     }
 }

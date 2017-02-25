@@ -66,7 +66,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log.v(LOG_TAG, "onCreateView");
         mGridAdapter = new GridAdapter(null, getActivity(), 0);
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
@@ -82,7 +81,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
                     ((Callback) getActivity()).onItemSelected(MoviesContract.MoviesEntry.buildMoviesUriWithID(id), cursor.getString(COL_MOVIE_MDB_ID));
                 }
                 mPosition = position;
-                //Log.v(LOG_TAG, "mPosition at onClick - "+mPosition);
             }
         });
         if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)){
@@ -93,11 +91,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             //Log.v(LOG_TAG, "Else? ");
             //Log.v(LOG_TAG, "savedInstanceState - "+String.valueOf(savedInstanceState));
             //Log.v(LOG_TAG, "savedInstanceState.containsKey(SELECTED_KEY) - "+savedInstanceState.containsKey(SELECTED_KEY));
-
-
-
         }
-
         return rootView;
     }
 
@@ -131,8 +125,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     }
 
     private void getDataFromAPI(){
-        Log.v(LOG_TAG, "getDataFromAPI");
-        //Log.v(LOG_TAG, "sort method - "+Utility.apiSortMethod(getActivity()));
 /*        FetchMovieInfoTask movieInfoTask = new FetchMovieInfoTask(getContext());
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -145,21 +137,11 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onResume() {
         super.onResume();
-        Log.v(LOG_TAG, "onResume" );
-//        Log.v("Storage", String.valueOf(
-//                Environment.getExternalStorageDirectory().getParent()) + "\n" +
-//                Environment.getExternalStorageDirectory().getPath() + "\n" +
-//                Environment.getDataDirectory() + "\n" +
-//                Environment.getDownloadCacheDirectory() + "\n"+
-//                Environment.getRootDirectory()
-//        );
-
-
-
         getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
         String selection;
         String[] selectionArgs = new String[1];
 
+          //Boolean.parseBoolean(Utility.showFavs(getActivity()))
         if (Utility.showFavs(getActivity()).equals("true")) {
             selection = MoviesContract.MoviesEntry.TABLE_NAME + "." + MoviesContract.MoviesEntry.COLUMN_FAV_MOVIE + " = ? ";
             selectionArgs[0] = Utility.showFavs(getActivity());
@@ -167,43 +149,31 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             selection = null;
             selectionArgs = null;
         }
-        //Log.v("onResume", String.valueOf(selection) +" ++ "+ (selection == null ? null : selectionArgs[0]));
-
         Cursor cursor = getActivity().getContentResolver().query(
                 MoviesContract.MoviesEntry.buildMoviesUri(),
                 null,
                 selection,
                 selectionArgs,
-                Utility.sortMethod(getActivity()) + " LIMIT 20");
+                Utility.sortMethod(getActivity()));
 
         try {
-            if (!cursor.moveToFirst() && Utility.showFavs(getActivity()).equals("false")){
-                Log.v("onResume","Getting data from API");
+            if (cursor !=null && !cursor.moveToFirst() && Utility.showFavs(getActivity()).equals("false")){
+                Log.v(LOG_TAG,"Getting data from API");
                 getDataFromAPI();
-            } else if (!cursor.moveToFirst() && Utility.showFavs(getActivity()).equals("true")){
+            } else if (cursor !=null && !cursor.moveToFirst() && Utility.showFavs(getActivity()).equals("true")){
                 Toast.makeText(getActivity(),"You don't have favourite movies", Toast.LENGTH_SHORT).show();
-            } else {
-                //Log.v("onResume","Table is not empty");
+            } else if(cursor !=null){
+                cursor.close();
             }
         } catch (NullPointerException e){
-            Log.e("MainActivityFragment", "ERROR", e );
+            Log.e(LOG_TAG, "ERROR", e );
         }
-        //cursor.close();
     }
 
     @Override
     public void onStart(){
-        Log.v(LOG_TAG, "onStart");
         super.onStart();
         verifyStoragePermissions(getActivity());
-        //File intSorage = getActivity().getFilesDir();
-        // File[] files = intSorage.listFiles();
-        //Log.v("Files", "Number of files - " + files.length);
-//        for (int i = 0; i < files.length; i++){
-//            Log.v("Files","File "+ i + " - "+ files[i]);
-//        }
-
-
     }
 
     @Override
@@ -222,31 +192,15 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             selectionArgs = null;
         }
 
-        cursorLoader = new CursorLoader(getActivity(),movieUri, MOVIE_COLUMNS,selection,selectionArgs, sortOrder);
+        cursorLoader = new CursorLoader(getActivity(),movieUri, MOVIE_COLUMNS,selection,selectionArgs, sortOrder + " LIMIT 20");//Limit 20
         return cursorLoader;
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-
-/*        if (cursor.getCount()%2 == 1){
-            *//*If uneven number of posters(number of favourites can be uneven), add placeholder *//*
-            //TODO:Make sure placeholder is not clickable
-            Log.v(LOG_TAG, "Cursor is uneven");
-            MatrixCursor placeholderRow = new MatrixCursor(MOVIE_COLUMNS);
-            placeholderRow.addRow(new String[]{,null, "placeholder",null,null,null,null, null, null});
-            Cursor[] cursors = {placeholderRow,cursor};
-            cursor = new MergeCursor(cursors);
-        }*/
-
         mGridAdapter.swapCursor(cursor);
-
         if (mPosition != GridView.INVALID_POSITION){
-            //Log.v(LOG_TAG, "mPosition != GridView.INVALID_POSITION");
-
             mGridView.smoothScrollToPosition(mPosition);
-        } else {
-            //Log.v(LOG_TAG, "mPosition - "+mPosition+", GridView.INVALID_POSITION - "+GridView.INVALID_POSITION);
         }
     }
 
@@ -257,39 +211,15 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        Log.v(LOG_TAG, "onActivityCreated");
         getLoaderManager().initLoader(MOVIE_LOADER, null, this);
-        //Log.v(LOG_TAG, "onActivityCreated, savedInstanceState - "+savedInstanceState);
         super.onActivityCreated(savedInstanceState);
 
     }
-    /** Check permissions to read and write files*/
-//    private static final int REQUEST_EXTERNAL_STORAGE = 1;
-//    private static String[] PERMISSIONS_STORAGE = {
-//            Manifest.permission.READ_EXTERNAL_STORAGE,
-//            Manifest.permission.WRITE_EXTERNAL_STORAGE
-//    };
-//
-//    public void verifyStoragePermissions(Activity activity) {
-//        int permission = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
-//
-//        if (permission != PackageManager.PERMISSION_GRANTED){
-//
-//            ActivityCompat.requestPermissions(getActivity(), PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
-//            Log.v("Permission", "Got permissions");
-//        }
-//        Log.v("Permission", "Already got them");
-//
-//    }
-
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        Log.v(LOG_TAG, "onSaveInstanceState");
-
         if (mPosition != GridView.INVALID_POSITION){
             outState.putInt(SELECTED_KEY, mPosition);
-            //Log.v(LOG_TAG, "mPosition at onSaveInstanceState - "+outState.getInt(SELECTED_KEY));
         }
 
         super.onSaveInstanceState(outState);
@@ -298,6 +228,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
 
     public interface Callback {
-        public void onItemSelected(Uri uri, String mdbID);
+        void onItemSelected(Uri uri, String mdbID);
     }
 }

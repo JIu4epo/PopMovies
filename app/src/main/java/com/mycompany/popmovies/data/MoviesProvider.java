@@ -29,36 +29,6 @@ public class MoviesProvider extends ContentProvider {
     static final int REVIEWS_WITH_ID = 301;
 
 
-/**
-    private static final SQLiteQueryBuilder sMoviesWithVideos;
-
-    static{
-        sMoviesWithVideos = new SQLiteQueryBuilder();
-        //movies INNER JOIN videos ON movies._id = videos.movie_id
-        sMoviesWithVideos.setTables(
-                MoviesEntry.TABLE_NAME + " INNER JOIN " +
-                        VideosEntry.TABLE_NAME +
-                        " ON " + MoviesEntry.TABLE_NAME +
-                        "." + MoviesEntry._ID +
-                        " = " + VideosEntry.TABLE_NAME +
-                        "." + VideosEntry.COLUMN_MOVIE_KEY);
-    }*/
-
-
-/**
-    private static final SQLiteQueryBuilder sMoviesWithReviews;
-    static{
-        sMoviesWithReviews = new SQLiteQueryBuilder();
-        //movies INNER JOIN reviews ON movies._id = reviews.movie_id
-        sMoviesWithVideos.setTables(
-                MoviesEntry.TABLE_NAME + " INNER JOIN " +
-                        ReviewsEntry.TABLE_NAME +
-                        " ON " + MoviesEntry.TABLE_NAME +
-                        "." + MoviesEntry._ID +
-                        " = " + ReviewsEntry.TABLE_NAME +
-                        "." + ReviewsEntry.COLUMN_MOVIE_KEY);
-    }*/
-
     private static final String sMovieWithID =
             MoviesEntry.TABLE_NAME+ "." + MoviesEntry._ID + " = ? ";
 
