@@ -16,15 +16,12 @@ Project description: <a href="https://docs.google.com/document/d/1ZlN1fUsCSKuInL
 <li>Custom Adapter with Picasso Image Library</li>
 <li>Use of preferences</li></ul>
 "Stage Two" finished:
-Trailers are available to play in an app of choice.
-Added reviews
-Adding moview to favourites
-Additional - Movies are saved in SQLite database.
-Sorting with an additional pivot to show favorites collection
+<ul><li>Trailers are available to play in an app of choice.</li>
+<li>Added reviews.</li>
+<li>Adding moview to favourites.</li>
+<li>Additional - Movies are saved in SQLite database.</li>
+<li>Sorting with an additional pivot to show favorites collection.</li></ul>
 
 Screenshots:
 
-<img src="http://i.imgur.com/0PVvqTa.jpg" height="250"/>
-<img src="http://i.imgur.com/CAQKu8V.png" height="250"/>
-<img src="http://i.imgur.com/KdnYSdD.jpg" height="250"/>
-<img src="http://i.imgur.com/isml7a4.png" height="250"/>
+<img src="http://i.imgur.com/0PVvqTa.jpg" height="250"/>  <img src="http://i.imgur.com/CAQKu8V.png" height="250"/>  <img src="http://i.imgur.com/KdnYSdD.jpg" height="250"/>  <img src="http://i.imgur.com/isml7a4.png" height="250"/>  
