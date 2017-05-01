@@ -16,7 +16,7 @@ Project description: <a href="https://docs.google.com/document/d/1ZlN1fUsCSKuInL
 <li>Custom Adapter with Picasso Image Library</li>
 <li>Use of preferences</li></ul>
 Screenshots:</br>
-<img src="https://dl.dropboxusercontent.com/s/7ehhbradool3662/11.png?dl=0" height="250"/> <img src="https://dl.dropboxusercontent.com/s/r4dfdgn10hc4tc3/33.png?dl=0" height="250"/> <img src="https://dl.dropboxusercontent.com/s/sronf1zhcp4mpx1/44.png?dl=0" height="250"/> <img src="https://dl.dropboxusercontent.com/s/sronf1zhcp4mpx1/44.png?dl=0" height="250"/>
+<img src="https://dl.dropboxusercontent.com/s/7ehhbradool3662/11.png?dl=0" height="250"/><img src="https://dl.dropboxusercontent.com/s/r4dfdgn10hc4tc3/33.png?dl=0" height="250"/><img src="https://dl.dropboxusercontent.com/s/sronf1zhcp4mpx1/44.png?dl=0" height="250"/><img src="https://dl.dropboxusercontent.com/s/sronf1zhcp4mpx1/44.png?dl=0" height="250"/>
 
 "Stage Two" finished:
 <ul><li>Trailers are available to play in an app of choice.</li>
