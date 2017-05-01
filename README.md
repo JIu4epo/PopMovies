@@ -17,7 +17,7 @@ Project description: <a href="https://docs.google.com/document/d/1ZlN1fUsCSKuInL
 <li>Use of preferences</li></ul>
 Screenshots:</br>
 <img src="http://i.imgur.com/0PVvqTa.jpg" height="250"/><img src="http://i.imgur.com/CAQKu8V.png" height="250"/><img src="http://i.imgur.com/KdnYSdD.jpg" height="250"/><img src="http://i.imgur.com/isml7a4.png" height="250"/>
-<img src="http://i.imgur.com/0PVvqTa.jpg"/> <img src="http://i.imgur.com/CAQKu8V.png"/> <img src="http://i.imgur.com/KdnYSdD.jpg"/> <img src="http://i.imgur.com/isml7a4.png"/>
+<img src="http://i.imgur.com/0PVvqTa.jpg" height="250"/> <img src="http://i.imgur.com/CAQKu8V.png" height="250"/> <img src="http://i.imgur.com/KdnYSdD.jpg" height="250"/> <img src="http://i.imgur.com/isml7a4.png" height="250"/>
 "Stage Two" finished:
 <ul><li>Trailers are available to play in an app of choice.</li>
 <li>Added reviews.</li>
