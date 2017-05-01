@@ -13,8 +13,14 @@ Project description: <a href="https://docs.google.com/document/d/1ZlN1fUsCSKuInL
 "Stage One" finished:
 <ul><li>AsyncTask with connection to the "themoviedb.org API" and fetch data in JSON format</li>
 <li>JSON parser</li>
-<li>Custom Adapter woth Picasso Image Library</li>
+<li>Custom Adapter with Picasso Image Library</li>
 <li>Use of preferences</li></ul>
+"Stage Two" finished:
+Trailers are available to play in an app of choice.
+Added reviews
+Adding moview to favourites
+Additional - Movies are saved in SQLite database.
+Sorting with an additional pivot to show favorites collection
 
 Screenshots:
 
