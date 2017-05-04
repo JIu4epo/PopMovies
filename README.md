@@ -9,7 +9,7 @@ Final project for the "Udacity Developing Android Apps” course
 
 Project description: <a href="https://docs.google.com/document/d/1ZlN1fUsCSKuInLECcJkslIqvpKlP7jWL2TP9m6UiA6I/pub?embedded=true">Popular Movies App Implementation Guide</a>
 
- <a href="https://www.dropbox.com/s/qv2o23zj0g4y05m/PopMovies.apk?dl=0">Download apk (05.01.2017)</a>
+ <a href="https://www.dropbox.com/s/sohp0o2v0850bmv/PopMovies.apk?dl=0">Download apk (05.01.2017)</a>
 
 <b>Current state of project</b>   
 "Stage One" finished:
